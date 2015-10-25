@@ -1,0 +1,8 @@
+#!/bin/bash
+
+echo 'Cleaning'
+rm -rf out/
+mkdir out
+echo 'Compiling...'
+CPLUS_INCLUDE_PATH=`pwd` make &&
+echo 'Compile successfully. Use `cd out && ./minisql` to run this program.'

@@ -1,8 +1,8 @@
 #include "src/db/db_help.h"
 
-namespace Database {
+namespace db {
 int DBHelp() {
 
   return 0;
 }
-}
+}  // namespace db

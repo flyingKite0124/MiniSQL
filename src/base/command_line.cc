@@ -1,7 +1,7 @@
 #include "src/base/command_line.h"
 using namespace std;
 
-namespace Base {
+namespace base {
 namespace CommandLine {
 map<string, string> ParseCommandLine(int argc, const char* argv[]) {
   vector<string> args;

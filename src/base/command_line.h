@@ -7,11 +7,11 @@
 #include <utility>
 #include <algorithm>
 
-namespace Base {
+namespace base {
 namespace CommandLine {
 std::map<std::string, std::string> ParseCommandLine(int argc,
                                                     const char* argv[]);
 } // namespace CommandLine
 } // namespace base
 
-#endif
+#endif  // SRC_BASE_COMMAND_LINE_H

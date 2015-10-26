@@ -1,5 +1,5 @@
-#ifndef SRC_BASE_COMMAND_LINE_H
-#define SRC_BASE_COMMAND_LINE_H
+#ifndef BASE_COMMAND_LINE_H
+#define BASE_COMMAND_LINE_H
 
 #include <map>
 #include <vector>
@@ -14,4 +14,4 @@ std::map<std::string, std::string> ParseCommandLine(int argc,
 } // namespace CommandLine
 } // namespace base
 
-#endif  // SRC_BASE_COMMAND_LINE_H
+#endif  // BASE_COMMAND_LINE_H

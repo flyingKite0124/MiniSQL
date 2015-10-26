@@ -1,16 +1,12 @@
-#include "src/base/command_line.h"
-#include "src/db/db_main.h"
-#include "src/db/db_help.h"
+#include "base/command_line.h"
+#include "db/db_main.h"
+#include "db/db_help.h"
 
 #include <stdio.h>
 using namespace std;
 
 int main(int argc, const char* argv[]) {
   auto command_line = base::CommandLine::ParseCommandLine(argc, argv);
-  for (auto& command: command_line) {
-    printf("%s: %s\n", command.first.c_str(),
-                       command.second.c_str());
-  }
   if (command_line.find("help") != command_line.end()) {
     // `--help` for usage.
     return db::DBHelp();

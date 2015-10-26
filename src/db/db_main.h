@@ -1,4 +1,4 @@
-#ifndef SRC_DB_DB_MAIN_H
-#define SRC_DB_DB_MAIN_H
+#ifndef DB_DB_MAIN_H
+#define DB_DB_MAIN_H
 
-#endif  // SRC_DB_DB_MAIN_H
+#endif  // DB_DB_MAIN_H

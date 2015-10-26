@@ -1,12 +1,14 @@
 #include "db/db_help.h"
-#include "stdio.h"
+
+#include <iostream>
+using namespace std;
 
 namespace db {
 int DBHelp() {
-  puts("\nUsage: minisql [script] [--help]\n");
-  puts("minisql --help      Quick help.");
-  puts("minisql             Run in REPL mode.");
-  puts("minisql [script]    Run SQL script.");
+  cout << endl << "Usage: minisql [script] [--help]" << endl << endl;
+  cout << "minisql --help      Quick help." << endl;
+  cout << "minisql             Run in REPL mode." << endl;
+  cout << "minisql [script]    Run SQL script." << endl;
   return 0;
 }
 }  // namespace db

@@ -1,8 +1,9 @@
-#include "base/command_line.h"
 #include "db/db_main.h"
-#include "db/db_help.h"
 
-#include <stdio.h>
+#include "base/command_line.h"
+#include "db/db_help.h"
+#include "db/db_repl.h"
+
 using namespace std;
 
 int main(int argc, const char* argv[]) {
@@ -14,7 +15,7 @@ int main(int argc, const char* argv[]) {
     // A filename following for script execution.
     // return DB::DBRunScript(command_line[filename]);
   } else {
-    // return DB::DBREPL();
+    return db::DBREPL();
   }
   return 0;
 }

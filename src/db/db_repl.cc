@@ -7,12 +7,14 @@ using namespace std;
 #include "db/db_process.h"
 
 namespace db {
-int DBREPL() {
+int DBREPL(istream& in, bool prompt) {
   cout << "MiniSQL shell version: 0.0.1" << endl;
   cout << "connecting to: default" << endl;
-  cout << "> ";
+  if (prompt) {
+    cout << "> ";
+  }
   string chunk = "", buffer = "", command = "";
-  while (getline(cin, chunk)) {
+  while (getline(in, chunk)) {
     if (buffer.length() > 0)
       buffer += " ";
     buffer = buffer + chunk;
@@ -24,13 +26,17 @@ int DBREPL() {
         break;
       }
     }
-    if (buffer.length() > 0) {
-      cout << "... ";
-    } else {
-      cout << "> ";
+    if (prompt) {
+      if (buffer.length() > 0) {
+        cout << "... ";
+      } else {
+        cout << "> ";
+      }
     }
   }
-  cout << endl << "bye" << endl;
+  if (prompt) {
+    cout << endl << "bye" << endl;
+  }
   return 0;
 }
 }  // namespace db

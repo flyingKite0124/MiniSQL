@@ -4,6 +4,8 @@
 #include "db/db_help.h"
 #include "db/db_repl.h"
 
+#include <iostream>
+#include <fstream>
 using namespace std;
 
 int main(int argc, const char* argv[]) {
@@ -13,9 +15,10 @@ int main(int argc, const char* argv[]) {
     return db::DBHelp();
   } else if (command_line.find("script") != command_line.end()) {
     // A filename following for script execution.
-    // return DB::DBRunScript(command_line[filename]);
+    ifstream fin(command_line["script"]);
+    return db::DBREPL(fin, false);
   } else {
-    return db::DBREPL();
+    return db::DBREPL(cin);
   }
   return 0;
 }

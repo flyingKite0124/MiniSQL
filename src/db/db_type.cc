@@ -1,6 +1,5 @@
 #include "db/db_type.h"
 
-#include <ctype.h>
 #include <assert.h>
 #include <string>
 #include <sstream>
@@ -44,12 +43,9 @@ CreateTable::CreateTable(string command) {
   getline(hin, cur, '\0');
   table_name = String::Trim(cur);
   // Check table_name is valid
-  if (!isalpha(table_name[0]))
-    throw string("Table name should start with a letter.");
-  for (size_t i = 0; i < table_name.length(); ++i) {
-    if (!isalnum(table_name[i]) && !(table_name[i] == '_'))
-      throw string("Table name should contain [A-Za-z0-9_] only.");
-  }
+  if (!String::IsWord(table_name))
+    throw string("Table name should contains only [A-Za-z0-9_]" +
+                 " and starts with a letter.");
   // Parse definitions to get attr_list
   vector<string> definitions = String::Split(definition, ',');
   for (string& s: definitions) {
@@ -73,6 +69,11 @@ CreateTable::CreateTable(string command) {
       attr.attribute_type = TYPE_NONE;
       istringstream in(s);
       in >> attr.name;
+      // Check if attribute_name is valid.
+      if (!String::IsWord(attr.name)) {
+        throw string("Attribute name should contains only [A-Za-z0-9_]" +
+                     " and starts with a letter.");
+      }
       string rest;
       size_t pos;
       getline(in, rest, '\0');
@@ -94,10 +95,6 @@ CreateTable::CreateTable(string command) {
         } else
           throw string("Type `" + rest + "` is not a valid type.");
       }
-      DEBUG << "Attr: " << attr.name << " "
-                        << attr.type << " "
-                        << attr.size << " "
-                        << attr.attribute_type << endl;
       attr_list.push_back(attr);
     }
   }

@@ -9,6 +9,7 @@ std::string Trim(std::string s);
 std::vector<std::string> Split(std::string s, char splitter);
 std::string TakeOffBracket(std::string s);
 int ToInt(std::string s);
+bool IsWord(std::string s);
 }  // namespace String
 }  // namespace base
 

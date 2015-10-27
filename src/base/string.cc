@@ -1,4 +1,6 @@
 #include "base/string.h"
+
+#include <ctype.h>
 using namespace std;
 
 namespace base {
@@ -48,6 +50,14 @@ int ToInt(string s) {
     else
       throw string("String `" + s + "` is not a valid integer.");
   return res;
+}
+bool IsWord(string s) {
+  if (s.length() == 0 || !isalpha(s[0]))
+    return false;
+  for (size_t i = 0; i < s.length(); ++i)
+    if (!isalnum(s[i]) && s[i] != '_')
+      return false;
+  return true;
 }
 }  // namespace String
 }  // namespace base

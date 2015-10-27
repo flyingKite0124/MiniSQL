@@ -4,6 +4,7 @@
 #include <string>
 using namespace std;
 
+#include "base/string.h"
 #include "db/db_process.h"
 
 namespace db {
@@ -22,7 +23,7 @@ int DBREPL(istream& in, bool prompt) {
     while ((pos = buffer.find(';')) != string::npos) {
       command = buffer.substr(0, pos + 1);
       buffer = buffer.substr(pos + 1);
-      if (DBProcess(command)) {
+      if (DBProcess(base::String::Trim(command))) {
         break;
       }
     }

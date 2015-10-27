@@ -8,8 +8,13 @@
 #include <fstream>
 using namespace std;
 
+int db::debug = 0;
+
 int main(int argc, const char* argv[]) {
   auto command_line = base::CommandLine::ParseCommandLine(argc, argv);
+  if (command_line.find("debug") != command_line.end()) {
+    db::debug = 1;
+  }
   if (command_line.find("help") != command_line.end()) {
     // `--help` for usage.
     return db::DBHelp();

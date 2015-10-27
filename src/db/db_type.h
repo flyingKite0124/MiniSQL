@@ -6,9 +6,15 @@
 
 namespace db {
 
+// COMMAND
+enum COMMAND {
+  COMMAND_QUIT = 0xDEADBEEF
+};
+
 // Error type
 enum ERROR_CODE {
   SYNTAX_ERROR = 1,
+  RUNTIME_ERROR,
   UNKNOWN_ERROR
 };
 

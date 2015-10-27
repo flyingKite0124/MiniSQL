@@ -31,8 +31,6 @@ CreateTable::CreateTable(string command) {
   string header = String::Trim(command.substr(0, bracket_left)),
     definition = String::Trim(command.substr(bracket_left + 1,
                                              bracket_right - bracket_left - 1));
-  DEBUG << header << endl;
-  DEBUG << definition << endl;
   string cur;
   // Parse header to get table_name
   istringstream hin(header);
@@ -44,8 +42,8 @@ CreateTable::CreateTable(string command) {
   table_name = String::Trim(cur);
   // Check table_name is valid
   if (!String::IsWord(table_name))
-    throw string("Table name should contains only [A-Za-z0-9_]" +
-                 " and starts with a letter.");
+    throw string("Table name should contains only [A-Za-z0-9_]") +
+          string(" and starts with a letter.");
   // Parse definitions to get attr_list
   vector<string> definitions = String::Split(definition, ',');
   for (string& s: definitions) {
@@ -71,8 +69,8 @@ CreateTable::CreateTable(string command) {
       in >> attr.name;
       // Check if attribute_name is valid.
       if (!String::IsWord(attr.name)) {
-        throw string("Attribute name should contains only [A-Za-z0-9_]" +
-                     " and starts with a letter.");
+        throw string("Attribute name should contains only [A-Za-z0-9_]") +
+              string(" and starts with a letter.");
       }
       string rest;
       size_t pos;
@@ -98,22 +96,26 @@ CreateTable::CreateTable(string command) {
       attr_list.push_back(attr);
     }
   }
+  for (Attribute& attr: attr_list) {
+    DEBUG << attr.name << " " << attr.type << " "
+          << attr.size << " " << attr.attribute_type << endl;
+  }
 }
 int CreateTable::Execute() {
-  throw new string("Not implemented");
+  throw string("Operation `create table` is not implemented.");
 }
 // Drop Table class
 DropTable::DropTable(string command) {
   op_type = TYPE_DROP_TABLE;
 }
 int DropTable::Execute() {
-  throw new string("Not implemented");
+  throw string("Operation `drop table` is not implemented.");
 }
 // Create Index class
 CreateIndex::CreateIndex(string command) {
   op_type = TYPE_CREATE_INDEX;
 }
 int CreateIndex::Execute() {
-  throw new string("Not implemented");
+  throw string("Operation `create index` is not implemented.");
 }
 }  // namespace db

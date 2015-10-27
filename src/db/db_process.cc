@@ -17,13 +17,20 @@ int DBProcess(string command) {
       op = new DropTable(command);
     } else if (command.find("create index ") == 0) {
       op = new CreateIndex(command);
+    } else if (command.find("quit") == 0) {
+      return COMMAND_QUIT;
     } else {
-      throw string("Unknown operation.");
+      throw string("Command `" + command + "` contains unknown operation.");
     }
   } catch (string& e) {
     cout << "Syntax Error: " << e << endl;
     return SYNTAX_ERROR;
   }
-  return op->Execute();
+  try {
+    return op->Execute();
+  } catch (string& e) {
+    cout << "Runtime Error: " << e << endl;
+    return RUNTIME_ERROR;
+  }
 }
 }  // namespace db

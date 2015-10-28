@@ -84,5 +84,23 @@ public:
   CreateIndex(std::string command);
   int Execute();
 };
+
+// DROP INDEX Operation
+class DropIndex : public Operation {
+private:
+  std::string index_name;
+public:
+  DropIndex(std::string command);
+  int Execute();
+};
+
+// EXECFILE Operation
+class Execfile : public Operation {
+private:
+  std::string filepath;
+public:
+  Execfile(std::string command);
+  int Execute();
+};
 }  // namespace db
 #endif  // DB_DB_TYPE_H

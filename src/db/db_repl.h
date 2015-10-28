@@ -4,7 +4,7 @@
 #include <iostream>
 
 namespace db {
-int DBREPL(std::istream& in, bool prompt = true);
+int DBREPL(std::istream& in, bool prompt = true, bool module = false);
 }  // namespace db
 
 #endif  // DB_DB_REPL_H

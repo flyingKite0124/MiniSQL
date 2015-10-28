@@ -9,9 +9,11 @@ using namespace std;
 #include "db/db_process.h"
 
 namespace db {
-int DBREPL(istream& in, bool prompt) {
-  cout << "MiniSQL shell version: 0.0.1" << endl;
-  cout << "connecting to: default" << endl;
+int DBREPL(istream& in, bool prompt, bool module) {
+  if (!module) {
+    cout << "MiniSQL shell version: 0.0.1" << endl;
+    cout << "connecting to: default" << endl;
+  }
   if (prompt) {
     cout << "> ";
   }
@@ -22,7 +24,7 @@ int DBREPL(istream& in, bool prompt) {
     buffer = buffer + chunk;
     size_t pos;
     while ((pos = buffer.find(';')) != string::npos) {
-      command = buffer.substr(0, pos + 1);
+      command = buffer.substr(0, pos);
       buffer = buffer.substr(pos + 1);
       int ret_code = DBProcess(base::String::Trim(command));
       if (ret_code == COMMAND_QUIT) {

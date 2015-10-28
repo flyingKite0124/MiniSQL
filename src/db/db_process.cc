@@ -17,6 +17,8 @@ int DBProcess(string command) {
       op = new DropTable(command);
     } else if (command.find("create index ") == 0) {
       op = new CreateIndex(command);
+    } else if (command.find("execfile ") == 0) {
+      op = new Execfile(command);
     } else if (command.find("quit") == 0) {
       return COMMAND_QUIT;
     } else {

@@ -4,8 +4,11 @@
 #include <iostream>
 
 namespace db {
+
 int DBREPL(bool module);
+
 int DBREPL(bool module, std::istream& in);
+
 }  // namespace db
 
 #endif  // DB_DB_REPL_H

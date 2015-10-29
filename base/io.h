@@ -4,9 +4,13 @@
 
 namespace base {
 namespace IO {
+
 bool ReadLine(std::string& dest, std::string prompt);
+
 int InitializeHistory();
+
 int SaveHistory();
+
 }  // namespace IO
 }  // namespace base
 #endif  // BASE_IO_H

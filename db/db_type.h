@@ -34,11 +34,16 @@ enum DB_OPERATION_TYPE {
   TYPE_DROP_TABLE,
   TYPE_CREATE_INDEX,
   TYPE_DROP_INDEX,
-  TYPE_SELECT,
-  TYPE_INSERT,
-  TYPE_DELETE,
+  TYPE_SELECT_FROM,
+  TYPE_INSERT_INTO,
+  TYPE_DELETE_FROM,
   TYPE_QUIT,
   TYPE_EXECUTE
+};
+
+// Relations
+enum RELATION {
+  LT, LTE, GT, GTE, NEQ, EQ
 };
 
 // Operations' basic class
@@ -57,8 +62,17 @@ typedef struct {
   DB_ATTRIBUTE_TYPE attribute_type;
 } Attribute;
 
+// Filter
+class Filter {
+public:
+  std::string key;
+  RELATION op;
+  std::string value;
+  Filter(std::string s);
+};
+
 // CREATE TABLE Operation
-class CreateTable : public Operation {
+class CreateTable: public Operation {
 private:
   std::string table_name;
   std::vector<Attribute> attr_list;
@@ -68,7 +82,7 @@ public:
 };
 
 // DROP TABLE Operation
-class DropTable : public Operation {
+class DropTable: public Operation {
 private:
   std::string table_name;
 public:
@@ -77,7 +91,7 @@ public:
 };
 
 // CREATE INDEX Operation
-class CreateIndex : public Operation {
+class CreateIndex: public Operation {
 private:
   std::string index_name, table_name, attr_name;
 public:
@@ -86,7 +100,7 @@ public:
 };
 
 // DROP INDEX Operation
-class DropIndex : public Operation {
+class DropIndex: public Operation {
 private:
   std::string index_name;
 public:
@@ -94,8 +108,38 @@ public:
   int Execute();
 };
 
+// INSERT INTO Operation
+class InsertInto: public Operation {
+private:
+  std::string table_name;
+  std::vector<std::string> values;
+public:
+  InsertInto(std::string command);
+  int Execute();
+};
+
+// SELECT FROM Operation
+class SelectFrom: public Operation {
+private:
+  std::string table_name;
+  std::vector<Filter> filters;
+public:
+  SelectFrom(std::string command);
+  int Execute();
+};
+
+// DELETE FROM Operation
+class DeleteFrom: public Operation {
+private:
+  std::string table_name;
+  std::vector<Filter> filters;
+public:
+  DeleteFrom(std::string command);
+  int Execute();
+};
+
 // EXECFILE Operation
-class Execfile : public Operation {
+class Execfile: public Operation {
 private:
   std::string filepath;
 public:

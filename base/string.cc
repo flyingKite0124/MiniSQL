@@ -34,6 +34,23 @@ vector<string> Split(string s, char splitter) {
   res.push_back(cur);
   return res;
 }
+vector<string> Split(string s, string splitter) {
+  vector<string> res;
+  string cur = "";
+  size_t pos;
+  while ((pos = s.find(splitter)) != string::npos) {
+    if (pos == 0)
+      res.push_back("");
+    else
+      res.push_back(s.substr(0, pos));
+    if (pos + splitter.length() < s.length())
+      s = s.substr(pos + splitter.length());
+    else
+      s = "";
+  }
+  res.push_back(s);
+  return res;
+}
 string TakeOffBracket(string s) {
   size_t bracket_left = s.find('('),
          bracket_right = s.rfind(')');
@@ -51,6 +68,19 @@ int ToInt(string s) {
     else
       throw invalid_argument("String `" + s + "` is not a valid integer.");
   return res;
+}
+string LiteralToString(string s) {
+  if (s[0] == '\'' && s[s.length() - 1] == '\'') {
+    string ret = s.substr(1, s.length() - 2);
+    // TODO: escaping
+    return ret;
+  } else if (s[0] == '\"' && s[s.length() - 1] == '"') {
+    string ret = s.substr(1, s.length() - 2);
+    // TODO: escaping
+    return ret;
+  } else {
+    return s;
+  }
 }
 bool IsWord(string s) {
   if (s.length() == 0 || !isalpha(s[0]))

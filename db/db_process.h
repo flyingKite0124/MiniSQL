@@ -4,7 +4,9 @@
 #include <string>
 
 namespace db {
+
 int DBProcess(std::string command);
+
 }  // namespace db
 
 #endif  // DB_DB_PROCESS_H

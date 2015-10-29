@@ -8,6 +8,7 @@
 
 namespace base {
 namespace CommandLine {
+
 std::map<std::string, std::string> ParseCommandLine(int argc,
                                                     const char* argv[]);
 } // namespace CommandLine

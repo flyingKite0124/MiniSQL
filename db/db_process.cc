@@ -18,8 +18,16 @@ int DBProcess(string command) {
       op = new DropTable(command);
     } else if (command.find("create index ") == 0) {
       op = new CreateIndex(command);
+    } else if (command.find("drop index ") == 0) {
+      op = new DropIndex(command);
     } else if (command.find("execfile ") == 0) {
       op = new Execfile(command);
+    } else if (command.find("insert into ") == 0) {
+      op = new InsertInto(command);
+    } else if (command.find("select * from ") == 0) {
+      op = new SelectFrom(command);
+    } else if (command.find("delete from ") == 0) {
+      op = new DeleteFrom(command);
     } else if (command.find("quit") == 0) {
       return COMMAND_QUIT;
     } else {

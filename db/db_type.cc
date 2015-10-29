@@ -13,6 +13,32 @@ using namespace std;
 #include "base/string.h"
 
 namespace db {
+
+using namespace base;
+
+inline RELATION StringToRelation(string s) {
+  if (s == ">") return GT;
+  if (s == "<") return LT;
+  if (s == "<>") return NEQ;
+  if (s == "=") return EQ;
+  if (s == ">=") return GTE;
+  if (s == "<=") return LTE;
+  throw invalid_argument("`" + s + "` is not a valid comparer.");
+}
+
+Filter::Filter(string s) {
+  istringstream in(s);
+  string cur;
+  in >> key;
+  if (!String::IsWord(key)) {
+    throw invalid_argument("`" + key + "` is not a valid attribute name");
+  }
+  in >> cur;
+  op = StringToRelation(cur);
+  in >> cur;
+  value = String::LiteralToString(cur);
+}
+
 // Create Table class
 // create table table_name (
 //   attr type(size),
@@ -21,7 +47,6 @@ namespace db {
 //   attr_type(attr),
 //   attr_type(attr)
 // );
-using namespace base;
 CreateTable::CreateTable(string command) {
   op_type = TYPE_CREATE_TABLE;
   // Split string into header and definition body.
@@ -105,6 +130,7 @@ CreateTable::CreateTable(string command) {
     }
   }
   DEBUG << "Parsed: create table" << endl;
+  DEBUG << "Table atrributes: " << endl;
   for (Attribute& attr: attr_list) {
     DEBUG << "+ Attribute name: " << attr.name << endl;
     DEBUG << "  Attribute Type: " << attr.type << endl;
@@ -116,7 +142,9 @@ CreateTable::CreateTable(string command) {
 int CreateTable::Execute() {
   throw runtime_error("Operation `create table` is not implemented.");
 }
+
 // Drop Table class
+// drop table table_name;
 DropTable::DropTable(string command) {
   op_type = TYPE_DROP_TABLE;
   istringstream in(command);
@@ -138,7 +166,9 @@ DropTable::DropTable(string command) {
 int DropTable::Execute() {
   throw runtime_error("Operation `drop table` is not implemented.");
 }
+
 // Create Index class
+// create index index_name on table_name(attr_name);
 CreateIndex::CreateIndex(string command) {
   op_type = TYPE_CREATE_INDEX;
   istringstream in(command);
@@ -169,7 +199,9 @@ CreateIndex::CreateIndex(string command) {
 int CreateIndex::Execute() {
   throw runtime_error("Operation `create index` is not implemented.");
 }
+
 // Drop Index Class
+// drop index index_name;
 DropIndex::DropIndex(string command) {
   op_type = TYPE_DROP_INDEX;
   istringstream in(command);
@@ -185,16 +217,17 @@ DropIndex::DropIndex(string command) {
   }
   index_name = cur;
   DEBUG << "Parsed: drop index" << endl;
-  DEBUG << "Table name: "<< index_name << endl;
+  DEBUG << "Index name: "<< index_name << endl;
   DEBUG << "==========================================================" << endl;
 }
 int DropIndex::Execute() {
   throw runtime_error("Operation `drop index` is not implemented.");
 }
-/*
+
 // Insert Into Class
-Insert::Insert(string command) {
-  op_type = TYPE_INSERT;
+// insert into table_name values (value 1, value 2, ..., value n);
+InsertInto::InsertInto(string command) {
+  op_type = TYPE_INSERT_INTO;
   istringstream in(command);
   string cur;
   in >> cur;
@@ -203,11 +236,106 @@ Insert::Insert(string command) {
   assert(cur == "into");
   in >> table_name;
   if (!String::IsWord(table_name)) {
-
+    throw invalid_argument("`" + table_name + "` is not a valid table name.");
   }
-}*/
+  getline(in, cur, '\0');
+  values = String::Split(String::Trim(String::TakeOffBracket(cur)), ',');
+  for (string& s: values) {
+    s = String::LiteralToString(String::Trim(s));
+  }
+  DEBUG << "Parsed: insert into" << endl;
+  DEBUG << "Table name: " << table_name << endl;
+  DEBUG << "Values: " << endl;
+  for (string &s: values) {
+    DEBUG << "+ Value: " << s << endl;
+  }
+  DEBUG << "==========================================================" << endl;
+}
+int InsertInto::Execute() {
+  throw runtime_error("Operation `insert into` is not implemented.");
+}
+
 // Select From Class
+// select * from table_name [where filter 1 and filter 2 and ... and filter n];
+SelectFrom::SelectFrom(string command) {
+  op_type = TYPE_SELECT_FROM;
+  istringstream in(command);
+  string cur;
+  in >> cur;
+  assert(cur == "select");
+  in >> cur;
+  assert(cur == "*");
+  in >> cur;
+  assert(cur == "from");
+  in >> table_name;
+  if (!String::IsWord(table_name)) {
+    throw invalid_argument("`" + table_name + "` is not a valid table name.");
+  }
+  // where
+  if (in >> cur) {
+    if (cur != "where") {
+      throw invalid_argument("`where` is excepted before `" + cur + "`.");
+    }
+    getline(in, cur, '\0');
+    cur = String::Trim(cur);
+    auto _filters = String::Split(cur, "and");
+    for (string filter: _filters) {
+      filters.push_back(Filter(String::Trim(filter)));
+    }
+  }
+  DEBUG << "Parsed: select from" << endl;
+  DEBUG << "Table name: " << table_name << endl;
+  DEBUG << "Filters: " << endl;
+  for (Filter f: filters) {
+    DEBUG << "+ Key: " << f.key
+          << " Op: " << f.op
+          << " Value: " << f.value << endl;
+  }
+  DEBUG << "==========================================================" << endl;
+}
+int SelectFrom::Execute() {
+  throw runtime_error("Operation `select from` is not implemented.");
+}
+
 // Delete From Class
+DeleteFrom::DeleteFrom(string command) {
+  op_type = TYPE_DELETE_FROM;
+  istringstream in(command);
+  string cur;
+  in >> cur;
+  assert(cur == "delete");
+  in >> cur;
+  assert(cur == "from");
+  in >> table_name;
+  if (!String::IsWord(table_name)) {
+    throw invalid_argument("`" + table_name + "` is not a valid table name.");
+  }
+  // where
+  if (in >> cur) {
+    if (cur != "where") {
+      throw invalid_argument("`where` is excepted before `" + cur + "`.");
+    }
+    getline(in, cur, '\0');
+    cur = String::Trim(cur);
+    auto _filters = String::Split(cur, "and");
+    for (string filter: _filters) {
+      filters.push_back(Filter(String::Trim(filter)));
+    }
+  }
+  DEBUG << "Parsed: delete from" << endl;
+  DEBUG << "Table name: " << table_name << endl;
+  DEBUG << "Filters: " << endl;
+  for (Filter f: filters) {
+    DEBUG << "+ Key: " << f.key
+          << " Op: " << f.op
+          << " Value: " << f.value << endl;
+  }
+  DEBUG << "==========================================================" << endl;
+}
+int DeleteFrom::Execute() {
+  throw runtime_error("Operation `delete from` is not implemented.");
+}
+
 // Execfile Class
 Execfile::Execfile(string command) {
   istringstream in(command);

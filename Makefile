@@ -5,6 +5,9 @@ all: db
 
 # base
 
+io.o: base/io.cc base/io.h
+	$(CPP) $(CPPFLAGS) -c base/io.cc -o base/io.o
+
 string.o: base/string.cc base/string.h
 	$(CPP) $(CPPFLAGS) -c base/string.cc -o base/string.o
 
@@ -28,5 +31,5 @@ db_repl.o: db/db_repl.cc db/db_repl.h
 db_process.o: db/db_process.cc db/db_process.h
 	$(CPP) $(CPPFLAGS) -c db/db_process.cc -o db/db_process.o
 
-db: string.o command_line.o db_type.o db_main.o db_help.o db_repl.o db_process.o
-	$(CPP) $(CPPFLAGS) base/string.o base/command_line.o db/db_type.o db/db_main.o db/db_help.o db/db_repl.o db/db_process.o -o minisql
+db: io.o string.o command_line.o db_type.o db_main.o db_help.o db_repl.o db_process.o
+	$(CPP) $(CPPFLAGS) base/io.o base/string.o base/command_line.o db/db_type.o db/db_main.o db/db_help.o db/db_repl.o db/db_process.o -o minisql -lreadline

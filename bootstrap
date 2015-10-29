@@ -1,5 +1,5 @@
 #!/bin/bash
 
 echo 'Compiling...'
-CPLUS_INCLUDE_PATH=`pwd` make &&
+CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:`pwd` make &&
 echo 'Compile successfully. Use `./minisql` to run this program.'

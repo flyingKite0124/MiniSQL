@@ -1,5 +1,6 @@
 #include "db/db_main.h"
 
+#include "base/io.h"
 #include "base/command_line.h"
 #include "db/db_help.h"
 #include "db/db_repl.h"
@@ -21,9 +22,12 @@ int main(int argc, const char* argv[]) {
   } else if (command_line.find("script") != command_line.end()) {
     // A filename following for script execution.
     ifstream fin(command_line["script"]);
-    return db::DBREPL(fin, false);
+    return db::DBREPL(false, fin);
   } else {
-    return db::DBREPL(cin);
+    base::IO::InitializeHistory();
+    int ret = db::DBREPL(false);
+    base::IO::SaveHistory();
+    return ret;
   }
   return 0;
 }

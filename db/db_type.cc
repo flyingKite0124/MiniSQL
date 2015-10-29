@@ -200,6 +200,6 @@ int Execfile::Execute() {
   if (!fin) {
     throw string("Fail to open file `" + filepath + "`.");
   }
-  return db::DBREPL(fin, false, true);
+  return db::DBREPL(true, fin);
 }
 }  // namespace db

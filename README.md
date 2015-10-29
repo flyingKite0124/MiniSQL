@@ -1,6 +1,22 @@
 # MiniSQL
 DBMS project.
 
+## Dependencies
+Ubuntu
+```sh
+apt-get install readline-dev
+```
+
+Fedora
+```sh
+yum install readline-devel
+```
+
+ArchLinux
+```sh
+pacman -S readline
+```
+
 ## Compile
 Install latest version of `clang++` and `GNUMake`.
 ```sh

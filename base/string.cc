@@ -1,6 +1,7 @@
 #include "base/string.h"
 
 #include <ctype.h>
+#include <stdexcept>
 using namespace std;
 
 namespace base {
@@ -39,7 +40,7 @@ string TakeOffBracket(string s) {
   if (bracket_left == string::npos ||
       bracket_right == string::npos ||
       bracket_left > bracket_right)
-    throw new string("Unmatched brackets in table definition.");
+    throw invalid_argument("Unmatched brackets in table definition.");
   return s.substr(bracket_left + 1, bracket_right - bracket_left - 1);
 }
 int ToInt(string s) {
@@ -48,7 +49,7 @@ int ToInt(string s) {
     if (s[i] >= '0' && s[i] <= '9')
       res = res * 10 + s[i] - '0';
     else
-      throw string("String `" + s + "` is not a valid integer.");
+      throw invalid_argument("String `" + s + "` is not a valid integer.");
   return res;
 }
 bool IsWord(string s) {

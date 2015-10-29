@@ -1,6 +1,7 @@
 #include "db/db_type.h"
 
 #include <assert.h>
+#include <stdexcept>
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -29,7 +30,7 @@ CreateTable::CreateTable(string command) {
   if (bracket_left == string::npos ||
       bracket_right == string::npos ||
       bracket_left > bracket_right)
-    throw string("Unmatched brackets in table definition.");
+    throw invalid_argument("Unmatched brackets in table definition.");
   string header = String::Trim(command.substr(0, bracket_left)),
     definition = String::Trim(command.substr(bracket_left + 1,
                                              bracket_right - bracket_left - 1));
@@ -44,7 +45,7 @@ CreateTable::CreateTable(string command) {
   table_name = String::Trim(cur);
   // Check table_name is valid
   if (!String::IsWord(table_name))
-    throw string("`" + table_name + "` is not a valid table name.");
+    throw invalid_argument("`" + table_name + "` is not a valid table name.");
   // Parse definitions to get attr_list
   vector<string> definitions = String::Split(definition, ',');
   for (string& s: definitions) {
@@ -61,7 +62,7 @@ CreateTable::CreateTable(string command) {
         }
       }
       if (!found) {
-        throw string("Attribute `" + attr_name + "` is not defined.");
+        throw invalid_argument("Attribute `" + attr_name + "` is not defined.");
       }
     } else {
       Attribute attr;
@@ -70,7 +71,8 @@ CreateTable::CreateTable(string command) {
       in >> attr.name;
       // Check if attribute_name is valid.
       if (!String::IsWord(attr.name)) {
-        throw string("`" + attr.name + "` is not a valid atrribute name.");
+        throw invalid_argument("`" + attr.name +
+                               "` is not a valid atrribute name.");
       }
       string rest;
       size_t pos;
@@ -79,7 +81,7 @@ CreateTable::CreateTable(string command) {
       if ((pos = rest.find('(')) != string::npos) {
         string type = String::Trim(rest.substr(0, pos));
         if (type != "char") {
-          throw string("Only the size of char type can be specified.");
+          throw invalid_argument("Only the size of `char` can be specified.");
         }
         attr.type = TYPE_CHAR;
         attr.size = String::ToInt(String::TakeOffBracket(rest.substr(pos)));
@@ -90,8 +92,14 @@ CreateTable::CreateTable(string command) {
         } else if (rest == "float") {
           attr.type = TYPE_FLOAT;
           attr.size = 4;
-        } else
-          throw string("Type `" + rest + "` is not a valid type.");
+        } else {
+          if (rest == "") {
+            throw invalid_argument("Attribute `" + attr.name +
+                                   "` needs a type.");
+          } else {
+            throw invalid_argument("Type `" + rest + "` is not a valid type.");
+          }
+        }
       }
       attr_list.push_back(attr);
     }
@@ -106,7 +114,7 @@ CreateTable::CreateTable(string command) {
   DEBUG << "========================================================" << endl;
 }
 int CreateTable::Execute() {
-  throw string("Operation `create table` is not implemented.");
+  throw runtime_error("Operation `create table` is not implemented.");
 }
 // Drop Table class
 DropTable::DropTable(string command) {
@@ -120,7 +128,7 @@ DropTable::DropTable(string command) {
   getline(in, cur, '\0');
   cur = String::Trim(cur.substr(0, cur.length()));
   if (!String::IsWord(cur)) {
-    throw string("`" + cur + "` is not a valid table name.");
+    throw invalid_argument("`" + cur + "` is not a valid table name.");
   }
   table_name = cur;
   DEBUG << "Parsed: drop table" << endl;
@@ -128,7 +136,7 @@ DropTable::DropTable(string command) {
   DEBUG << "==========================================================" << endl;
 }
 int DropTable::Execute() {
-  throw string("Operation `drop table` is not implemented.");
+  throw runtime_error("Operation `drop table` is not implemented.");
 }
 // Create Index class
 CreateIndex::CreateIndex(string command) {
@@ -141,11 +149,11 @@ CreateIndex::CreateIndex(string command) {
   assert(cur == "index");
   in >> index_name;
   if (!String::IsWord(index_name)) {
-    throw string("`" + index_name + "` is not a valid index name.");
+    throw invalid_argument("`" + index_name + "` is not a valid index name.");
   }
   in >> cur;
   if (cur != "on") {
-    throw string("Operation needs `on` keyword right after index name.");
+    throw invalid_argument("Operation needs `on` keyword right after index name.");
   }
   getline(in, table_name, '(');
   table_name = String::Trim(table_name);
@@ -159,7 +167,7 @@ CreateIndex::CreateIndex(string command) {
   DEBUG << "==========================================================" << endl;
 }
 int CreateIndex::Execute() {
-  throw string("Operation `create index` is not implemented.");
+  throw runtime_error("Operation `create index` is not implemented.");
 }
 // Drop Index Class
 DropIndex::DropIndex(string command) {
@@ -173,7 +181,7 @@ DropIndex::DropIndex(string command) {
   getline(in, cur, '\0');
   cur = String::Trim(cur.substr(0, cur.length()));
   if (!String::IsWord(cur)) {
-    throw string("`" + cur + "` is not a valid index name.");
+    throw invalid_argument("`" + cur + "` is not a valid index name.");
   }
   index_name = cur;
   DEBUG << "Parsed: drop index" << endl;
@@ -181,9 +189,23 @@ DropIndex::DropIndex(string command) {
   DEBUG << "==========================================================" << endl;
 }
 int DropIndex::Execute() {
-  throw string("Operation `drop index` is not implemented.");
+  throw runtime_error("Operation `drop index` is not implemented.");
 }
+/*
 // Insert Into Class
+Insert::Insert(string command) {
+  op_type = TYPE_INSERT;
+  istringstream in(command);
+  string cur;
+  in >> cur;
+  assert(cur == "insert");
+  in >> cur;
+  assert(cur == "into");
+  in >> table_name;
+  if (!String::IsWord(table_name)) {
+
+  }
+}*/
 // Select From Class
 // Delete From Class
 // Execfile Class
@@ -198,7 +220,7 @@ Execfile::Execfile(string command) {
 int Execfile::Execute() {
   ifstream fin(filepath);
   if (!fin) {
-    throw string("Fail to open file `" + filepath + "`.");
+    throw runtime_error("Fail to open file `" + filepath + "`.");
   }
   return db::DBREPL(true, fin);
 }

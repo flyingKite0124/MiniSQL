@@ -1,5 +1,6 @@
 #include "db/db_process.h"
 
+#include <stdexcept>
 #include <iostream>
 using namespace std;
 
@@ -22,16 +23,17 @@ int DBProcess(string command) {
     } else if (command.find("quit") == 0) {
       return COMMAND_QUIT;
     } else {
-      throw string("Command `" + command + "` contains unknown operation.");
+      throw invalid_argument("Command `" + command +
+                             "` contains unknown operation.");
     }
-  } catch (string& e) {
-    cout << "Syntax Error: " << e << endl;
+  } catch (invalid_argument& e) {
+    cout << "Syntax Error: " << e.what() << endl;
     return SYNTAX_ERROR;
   }
   try {
     return op->Execute();
-  } catch (string& e) {
-    cout << "Runtime Error: " << e << endl;
+  } catch (runtime_error& e) {
+    cout << "Runtime Error: " << e.what() << endl;
     return RUNTIME_ERROR;
   }
 }

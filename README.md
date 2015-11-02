@@ -4,7 +4,7 @@ DBMS project.
 ## Dependencies
 Ubuntu
 ```sh
-apt-get install readline-dev
+apt-get install libreadline-dev
 ```
 
 Fedora

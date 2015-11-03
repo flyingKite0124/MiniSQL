@@ -4,6 +4,11 @@
 *.o
 *.obj
 
+# Clion Temporary files
+*.xml
+*.idea
+CMakeLists.txt
+
 # Precompiled Headers
 *.gch
 *.pch

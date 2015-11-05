@@ -5,13 +5,13 @@
 #ifndef DB_DB_INDEX_H
 #define DB_DB_INDEX_H
 
-#include <iostream>
-#include <string>
-#include <vector>
-
 #include "db/db_global.h"
 #include "db/db_type.h"
 #include "db/db_buffer.h"
+
+#include <iostream>
+#include <string>
+#include <vector>
 
 namespace  db {
     enum node_types {nleaf = 0, leaf = 1};
@@ -21,14 +21,14 @@ namespace  db {
         BPT_node *pointers[16];
     };
 
-    bool CreateIndex(std::string table_name, std::string index_name);
-    bool DropIndex(std::string table_name, std::string index_name);
+    int CreateIndex(Table table, std::string attr_name);
+    int DropIndex(Table table, std::string attr_name);
 
-    bool InsertIndexNode(std::string table_name, std::string index_name);
-    bool RemoveIndexNode(std::string table_name, std::string index_name);
-    bool Search(std::string table_name, std::string index_name);
+    int InsertIndex(Table table, std::string attr_name,IndexPair pair);
+    IndexPairList SelectIndex(Table table, std::string attr_name,Filter filter);
+    int DeleteIndex(Table table, std::string attr_name,IndexPair pair);
 
-    bool RecreateIndex(std::string table_name, std::string index_name);
+    int RecreateIndex(Table table, std::string attr_name);
 }
 
 #endif //DB_DB_INDEX_H

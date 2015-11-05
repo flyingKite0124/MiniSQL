@@ -13,21 +13,21 @@ int DBProcess(string command) {
   DEBUG << "Processing: " << command << endl;
   try {
     if (command.find("create table ") == 0) {
-      op = new CreateTable(command);
+      op = new CreateTableOperation(command);
     } else if (command.find("drop table ") == 0) {
-      op = new DropTable(command);
+      op = new DropTableOperation(command);
     } else if (command.find("create index ") == 0) {
-      op = new CreateIndex(command);
+      op = new CreateIndexOperation(command);
     } else if (command.find("drop index ") == 0) {
-      op = new DropIndex(command);
+      op = new DropIndexOperation(command);
     } else if (command.find("execfile ") == 0) {
-      op = new Execfile(command);
+      op = new ExecfileOperation(command);
     } else if (command.find("insert into ") == 0) {
-      op = new InsertInto(command);
+      op = new InsertIntoOperation(command);
     } else if (command.find("select * from ") == 0) {
-      op = new SelectFrom(command);
+      op = new SelectFromOperation(command);
     } else if (command.find("delete from ") == 0) {
-      op = new DeleteFrom(command);
+      op = new DeleteFromOperation(command);
     } else if (command.find("quit") == 0) {
       return COMMAND_QUIT;
     } else {

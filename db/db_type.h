@@ -26,8 +26,9 @@ enum DB_DATA_TYPE {
 };
 enum DB_ATTRIBUTE_TYPE {
   TYPE_NONE,
-  TYPE_PRIMARY_KEY,
-  TYPE_UNIQUE
+  TYPE_UNIQUE,
+  TYPE_INDEXED,
+  TYPE_PRIMARY_KEY
 };
 enum DB_OPERATION_TYPE {
   TYPE_CREATE_TABLE,
@@ -72,78 +73,78 @@ public:
 };
 
 // CREATE TABLE Operation
-class CreateTable: public Operation {
+class CreateTableOperation: public Operation {
 private:
   std::string table_name;
   std::vector<Attribute> attr_list;
 public:
-  CreateTable(std::string command);
+  CreateTableOperation(std::string command);
   int Execute();
 };
 
 // DROP TABLE Operation
-class DropTable: public Operation {
+class DropTableOperation: public Operation {
 private:
   std::string table_name;
 public:
-  DropTable(std::string command);
+  DropTableOperation(std::string command);
   int Execute();
 };
 
 // CREATE INDEX Operation
-class CreateIndex: public Operation {
+class CreateIndexOperation: public Operation {
 private:
   std::string index_name, table_name, attr_name;
 public:
-  CreateIndex(std::string command);
+  CreateIndexOperation(std::string command);
   int Execute();
 };
 
 // DROP INDEX Operation
-class DropIndex: public Operation {
+class DropIndexOperation: public Operation {
 private:
   std::string index_name;
 public:
-  DropIndex(std::string command);
+  DropIndexOperation(std::string command);
   int Execute();
 };
 
 // INSERT INTO Operation
-class InsertInto: public Operation {
+class InsertIntoOperation: public Operation {
 private:
   std::string table_name;
   std::vector<std::string> values;
 public:
-  InsertInto(std::string command);
+  InsertIntoOperation(std::string command);
   int Execute();
 };
 
 // SELECT FROM Operation
-class SelectFrom: public Operation {
+class SelectFromOperation: public Operation {
 private:
   std::string table_name;
   std::vector<Filter> filters;
 public:
-  SelectFrom(std::string command);
+  SelectFromOperation(std::string command);
   int Execute();
 };
 
 // DELETE FROM Operation
-class DeleteFrom: public Operation {
+class DeleteFromOperation: public Operation {
 private:
   std::string table_name;
   std::vector<Filter> filters;
 public:
-  DeleteFrom(std::string command);
+  DeleteFromOperation(std::string command);
   int Execute();
 };
 
 // EXECFILE Operation
-class Execfile: public Operation {
+class ExecfileOperation: public Operation {
 private:
   std::string filepath;
 public:
-  Execfile(std::string command);
+  ExecfileOperation(std::string command);
   int Execute();
 };
 }  // namespace db

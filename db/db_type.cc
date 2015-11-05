@@ -47,7 +47,7 @@ Filter::Filter(string s) {
 //   attr_type(attr),
 //   attr_type(attr)
 // );
-CreateTable::CreateTable(string command) {
+CreateTableOperation::CreateTableOperation(string command) {
   op_type = TYPE_CREATE_TABLE;
   // Split string into header and definition body.
   size_t bracket_left = command.find('('),
@@ -72,6 +72,7 @@ CreateTable::CreateTable(string command) {
   if (!String::IsWord(table_name))
     throw invalid_argument("`" + table_name + "` is not a valid table name.");
   // Parse definitions to get attr_list
+  int primaryKeyCounter = 0;
   vector<string> definitions = String::Split(definition, ',');
   for (string& s: definitions) {
     s = String::Trim(s);
@@ -89,6 +90,7 @@ CreateTable::CreateTable(string command) {
       if (!found) {
         throw invalid_argument("Attribute `" + attr_name + "` is not defined.");
       }
+      primaryKeyCounter += 1;
     } else {
       Attribute attr;
       attr.attribute_type = TYPE_NONE;
@@ -129,6 +131,13 @@ CreateTable::CreateTable(string command) {
       attr_list.push_back(attr);
     }
   }
+  if (primaryKeyCounter == 0) {
+    throw invalid_argument("No primary key is specified on table `" +
+                            table_name + "`.");
+  } else if (primaryKeyCounter > 1) {
+    throw invalid_argument("Multiple primary keys are specified on table `" + 
+                            table_name + "`.");
+  }
   DEBUG << "Parsed: create table" << endl;
   DEBUG << "Table atrributes: " << endl;
   for (Attribute& attr: attr_list) {
@@ -139,13 +148,13 @@ CreateTable::CreateTable(string command) {
   }
   DEBUG << "========================================================" << endl;
 }
-int CreateTable::Execute() {
+int CreateTableOperation::Execute() {
   throw runtime_error("Operation `create table` is not implemented.");
 }
 
 // Drop Table class
 // drop table table_name;
-DropTable::DropTable(string command) {
+DropTableOperation::DropTableOperation(string command) {
   op_type = TYPE_DROP_TABLE;
   istringstream in(command);
   string cur;
@@ -163,13 +172,13 @@ DropTable::DropTable(string command) {
   DEBUG << "Table name: "<< table_name << endl;
   DEBUG << "==========================================================" << endl;
 }
-int DropTable::Execute() {
+int DropTableOperation::Execute() {
   throw runtime_error("Operation `drop table` is not implemented.");
 }
 
 // Create Index class
 // create index index_name on table_name(attr_name);
-CreateIndex::CreateIndex(string command) {
+CreateIndexOperation::CreateIndexOperation(string command) {
   op_type = TYPE_CREATE_INDEX;
   istringstream in(command);
   string cur;
@@ -196,13 +205,13 @@ CreateIndex::CreateIndex(string command) {
   DEBUG << "Attribute name: " << attr_name << endl;
   DEBUG << "==========================================================" << endl;
 }
-int CreateIndex::Execute() {
+int CreateIndexOperation::Execute() {
   throw runtime_error("Operation `create index` is not implemented.");
 }
 
 // Drop Index Class
 // drop index index_name;
-DropIndex::DropIndex(string command) {
+DropIndexOperation::DropIndexOperation(string command) {
   op_type = TYPE_DROP_INDEX;
   istringstream in(command);
   string cur;
@@ -220,13 +229,13 @@ DropIndex::DropIndex(string command) {
   DEBUG << "Index name: "<< index_name << endl;
   DEBUG << "==========================================================" << endl;
 }
-int DropIndex::Execute() {
+int DropIndexOperation::Execute() {
   throw runtime_error("Operation `drop index` is not implemented.");
 }
 
 // Insert Into Class
 // insert into table_name values (value 1, value 2, ..., value n);
-InsertInto::InsertInto(string command) {
+InsertIntoOperation::InsertIntoOperation(string command) {
   op_type = TYPE_INSERT_INTO;
   istringstream in(command);
   string cur;
@@ -251,13 +260,13 @@ InsertInto::InsertInto(string command) {
   }
   DEBUG << "==========================================================" << endl;
 }
-int InsertInto::Execute() {
+int InsertIntoOperation::Execute() {
   throw runtime_error("Operation `insert into` is not implemented.");
 }
 
 // Select From Class
 // select * from table_name [where filter 1 and filter 2 and ... and filter n];
-SelectFrom::SelectFrom(string command) {
+SelectFromOperation::SelectFromOperation(string command) {
   op_type = TYPE_SELECT_FROM;
   istringstream in(command);
   string cur;
@@ -293,12 +302,12 @@ SelectFrom::SelectFrom(string command) {
   }
   DEBUG << "==========================================================" << endl;
 }
-int SelectFrom::Execute() {
+int SelectFromOperation::Execute() {
   throw runtime_error("Operation `select from` is not implemented.");
 }
 
 // Delete From Class
-DeleteFrom::DeleteFrom(string command) {
+DeleteFromOperation::DeleteFromOperation(string command) {
   op_type = TYPE_DELETE_FROM;
   istringstream in(command);
   string cur;
@@ -332,12 +341,12 @@ DeleteFrom::DeleteFrom(string command) {
   }
   DEBUG << "==========================================================" << endl;
 }
-int DeleteFrom::Execute() {
+int DeleteFromOperation::Execute() {
   throw runtime_error("Operation `delete from` is not implemented.");
 }
 
 // Execfile Class
-Execfile::Execfile(string command) {
+ExecfileOperation::ExecfileOperation(string command) {
   istringstream in(command);
   string cur;
   in >> cur;
@@ -345,7 +354,7 @@ Execfile::Execfile(string command) {
   getline(in, cur, '\0');
   filepath = String::Trim(cur);
 }
-int Execfile::Execute() {
+int ExecfileOperation::Execute() {
   ifstream fin(filepath);
   if (!fin) {
     throw runtime_error("Fail to open file `" + filepath + "`.");

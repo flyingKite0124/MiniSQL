@@ -19,6 +19,15 @@ command_line.o: base/command_line.cc base/command_line.h
 db_type.o: db/db_type.cc db/db_type.h
 	$(CPP) $(CPPFLAGS) -c db/db_type.cc -o db/db_type.o
 
+db_global.o: db/db_global.cc db/db_global.h
+	$(CPP) $(CPPFLAGS) -c db/db_global.cc -o db/db_global.o
+
+db_buffer.o: db/db_buffer.cc db/db_buffer.h
+	$(CPP) $(CPPFLAGS) -c db/db_buffer.cc -o db/db_buffer.o
+
+db_catalog.o: db/db_catalog.cc db/db_catalog.h
+	$(CPP) $(CPPFLAGS) -c db/db_catalog.cc -o db/db_catalog.o
+
 db_main.o: db/db_main.cc db/db_main.h
 	$(CPP) $(CPPFLAGS) -c db/db_main.cc -o db/db_main.o
 
@@ -31,5 +40,8 @@ db_repl.o: db/db_repl.cc db/db_repl.h
 db_process.o: db/db_process.cc db/db_process.h
 	$(CPP) $(CPPFLAGS) -c db/db_process.cc -o db/db_process.o
 
-db: io.o string.o command_line.o db_type.o db_main.o db_help.o db_repl.o db_process.o
-	$(CPP) $(CPPFLAGS) base/io.o base/string.o base/command_line.o db/db_type.o db/db_main.o db/db_help.o db/db_repl.o db/db_process.o -o minisql -lreadline
+db: io.o string.o command_line.o db_type.o db_buffer.o db_catalog.o db_global.o db_main.o db_help.o db_repl.o db_process.o
+	$(CPP) $(CPPFLAGS) base/io.o base/string.o base/command_line.o db/db_type.o \
+	db/db_buffer.o db/db_catalog.o db/db_global.o db/db_main.o db/db_help.o db/db_repl.o \
+	db/db_process.o \
+	-o minisql -lreadline

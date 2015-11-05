@@ -63,7 +63,20 @@ typedef struct {
   DB_ATTRIBUTE_TYPE attribute_type;
 } Attribute;
 
-// Filter
+// TableType
+class Table {
+private:
+  std::string table_name;
+  std::vector<Attribute> attr_list;
+public:
+  Table();
+  Table(std::string _table_name, std::vector<Attribute> _attr_list);
+  std::string GetName();
+  std::vector<Attribute> GetAttributes();
+  Attribute GetPrimaryKey();
+};
+
+// Filter & FilterList
 class Filter {
 public:
   std::string key;
@@ -71,12 +84,20 @@ public:
   std::string value;
   Filter(std::string s);
 };
+typedef std::vector<Filter> FilterList;
+
+// Tuple(Record) & TupleList
+typedef std::pair<int, std::vector<std::string>> Tuple;
+typedef std::vector<Tuple> TupleList;
+
+// IndexPair & IndexPairList
+typedef std::pair<int, std::string> IndexPair;
+typedef std::vector<IndexPair> IndexPairList;
 
 // CREATE TABLE Operation
 class CreateTableOperation: public Operation {
 private:
-  std::string table_name;
-  std::vector<Attribute> attr_list;
+  Table table;
 public:
   CreateTableOperation(std::string command);
   int Execute();

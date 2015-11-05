@@ -4,4 +4,8 @@
 
 #include "db/db_global.h"
 
+namespace db {
+
 db::Buffer BufferDelegate;
+
+}  // namespace db

@@ -49,7 +49,7 @@ namespace db
     {
         string dir("data/"+table_name);
         system(("rm -rf "+dir).c_str());
-        
+
         return 0;
     }
 
@@ -57,7 +57,6 @@ namespace db
     string Buffer::__GetFilename(string table_name,int type,string index)
     {
         string path("data/"+table_name+"/");
-        string filename();
         switch(type)
         {
             case INDEX:
@@ -69,7 +68,6 @@ namespace db
     string Buffer::__GetFilename(string table_name,int type)
     {
         string path("data/"+table_name+"/");
-        string filename();
         switch(type)
         {
             case CATALOG:

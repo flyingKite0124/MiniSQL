@@ -8,6 +8,7 @@
 #include <iostream>
 using namespace std;
 
+#include "db/db_catalog.h"
 #include "db/db_main.h"
 #include "db/db_repl.h"
 #include "base/string.h"
@@ -39,6 +40,30 @@ Filter::Filter(string s) {
   value = String::LiteralToString(cur);
 }
 
+Table::Table() {
+}
+
+Table::Table(string _table_name, vector<Attribute> _attr_list) {
+  table_name = _table_name;
+  attr_list = _attr_list;
+}
+
+string Table::GetName() {
+  return table_name;
+}
+
+vector<Attribute> Table::GetAttributes() {
+  return attr_list;
+}
+
+Attribute Table::GetPrimaryKey() {
+  for (auto& attr: attr_list) {
+    if (attr.attribute_type == TYPE_PRIMARY_KEY)
+      return attr;
+  }
+  assert(false);
+}
+
 // Create Table class
 // create table table_name (
 //   attr type(size),
@@ -67,11 +92,12 @@ CreateTableOperation::CreateTableOperation(string command) {
   hin >> cur;
   assert(cur == "table"); // table
   getline(hin, cur, '\0');
-  table_name = String::Trim(cur);
+  string table_name = String::Trim(cur);
   // Check table_name is valid
   if (!String::IsWord(table_name))
     throw invalid_argument("`" + table_name + "` is not a valid table name.");
   // Parse definitions to get attr_list
+  vector<Attribute> attr_list;
   int primaryKeyCounter = 0;
   vector<string> definitions = String::Split(definition, ',');
   for (string& s: definitions) {
@@ -135,12 +161,14 @@ CreateTableOperation::CreateTableOperation(string command) {
     throw invalid_argument("No primary key is specified on table `" +
                             table_name + "`.");
   } else if (primaryKeyCounter > 1) {
-    throw invalid_argument("Multiple primary keys are specified on table `" + 
+    throw invalid_argument("Multiple primary keys are specified on table `" +
                             table_name + "`.");
   }
+  table = Table(table_name, attr_list);
   DEBUG << "Parsed: create table" << endl;
+  DEBUG << "Table name: " << table.GetName() << endl;
   DEBUG << "Table atrributes: " << endl;
-  for (Attribute& attr: attr_list) {
+  for (Attribute& attr: table.GetAttributes()) {
     DEBUG << "+ Attribute name: " << attr.name << endl;
     DEBUG << "  Attribute Type: " << attr.type << endl;
     DEBUG << "  Attribute Size: " << attr.size << endl;
@@ -149,7 +177,9 @@ CreateTableOperation::CreateTableOperation(string command) {
   DEBUG << "========================================================" << endl;
 }
 int CreateTableOperation::Execute() {
-  throw runtime_error("Operation `create table` is not implemented.");
+  Catalog::CreateTable(table);
+  return 0;
+  // throw runtime_error("Operation `create table` is not implemented.");
 }
 
 // Drop Table class
@@ -173,7 +203,8 @@ DropTableOperation::DropTableOperation(string command) {
   DEBUG << "==========================================================" << endl;
 }
 int DropTableOperation::Execute() {
-  throw runtime_error("Operation `drop table` is not implemented.");
+  Catalog::DropTable(table_name);
+  return 0;
 }
 
 // Create Index class

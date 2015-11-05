@@ -34,3 +34,6 @@ CMakeLists.txt
 
 minisql
 tags
+Makefile.test
+test.cc
+

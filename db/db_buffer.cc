@@ -20,6 +20,8 @@ namespace db
             __valid[i]=0;
             __buffer[i]=new char[4096];
         }
+        __zero_block=new char[4096];
+        memset(__zero_block,0,4096);
     }
 
     Buffer::~Buffer()
@@ -28,6 +30,7 @@ namespace db
         {
             delete[] __buffer[i];
         }
+        delete[] __zero_block;
     }
 
     int Buffer::CreateTable(string table_name,string primary_key)
@@ -93,65 +96,224 @@ namespace db
         if(i==-1)
         {
             i=__FindAvailableBufferBlock(table_name);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __type[i]=CATALOG;
         }
         memcpy(__buffer[i],content,4096);
         string filename=__GetFilename(table_name,CATALOG);
         FILE* fp=fopen(filename.c_str(),"rb+");
         fseek(fp,0,SEEK_SET);
         fwrite(__buffer[i],4096,1,fp);
-        __valid[i]=1;
-        __table[i]=table_name;
-        __type[i]=CATALOG;
         fclose(fp);
         return 1;
     }
 
     int Buffer::CreateIndex(string table_name,string index_name)
     {
-        //TODO
-        return 0;
+        char *first_block=new char[4096];
+        memset(first_block,0,4096);
+        int num=1;
+        memcpy(first_block,&num,sizeof(int));
+        num=0;
+        memcpy(first_block+sizeof(int),&num,sizeof(int));
+        num=2;
+        memcpy(first_block+2*sizeof(int),&num,sizeof(int));
+        int i=__IsInBuffer(table_name,INDEX,index_name,0);
+        if(i==-1)
+        {
+            i=__FindAvailableBufferBlock(table_name);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __index[i]=index_name;
+            __type[i]=INDEX;
+            __block[i]=0;
+        }
+        memcpy(__buffer[i],first_block,4096);
+        
+
+        string filename=__GetFilename(table_name,INDEX,index_name);
+        FILE* fp=fopen(filename.c_str(),"wb");
+        fseek(fp,0,SEEK_SET);
+        fwrite(__buffer[i],4096,1,fp);
+        
+        i=__IsInBuffer(table_name,INDEX,index_name,1);
+        if(i==-1)
+        {
+            i=__FindAvailableBufferBlock(table_name);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __index[i]=index_name;
+            __type[i]=INDEX;
+            __block[i]=1;
+        }
+        memcpy(__buffer[i],__zero_block,4096);
+        fwrite(__buffer[i],4096,1,fp);
+        
+        fclose(fp);
+        return 1;
+    }
+    
+    int Buffer::DropIndex(string table_name,string index_name)
+    {
+        string filename=__GetFilename(table_name,INDEX,index_name);
+        system(("rm "+filename).c_str());
+        return 1;
     }
 
     int Buffer::GetRootNumber(string table_name,string index_name)
     {
-        //TODO
-        return 0;
+        int i=__IsInBuffer(table_name,INDEX,index_name,0);
+        if(i==-1)
+        {
+            i=__FindAvailableBufferBlock(table_name);
+            string filename=__GetFilename(table_name,INDEX,index_name);
+            FILE* fp=fopen(filename.c_str(),"rb+");
+            fseek(fp,0,SEEK_SET);
+            fread(__buffer[i],4096,1,fp);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __index[i]=index_name;
+            __type[i]=INDEX;
+            __block[i]=0;
+            fclose(fp);
+        }
+        int root;
+        memcpy(&root,__buffer[i],sizeof(int));
+        return root;
     }
 
     int Buffer::SetRootNumber(string table_name,string index_name,int block)
     {
-        //TODO
-        return 0;
+        string filename=__GetFilename(table_name,INDEX,index_name);
+        FILE* fp=fopen(filename.c_str(),"rb+");
+        int i=__IsInBuffer(table_name,INDEX,index_name,0);
+        if(i==-1)
+        {
+            i=__FindAvailableBufferBlock(table_name);
+            fseek(fp,0,SEEK_SET);
+            fread(__buffer[i],4096,1,fp);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __index[i]=index_name;
+            __type[i]=INDEX;
+            __block[i]=0;
+        }
+        memcpy(__buffer[i],&block,sizeof(int));
+        fwrite(__buffer[i],4096,1,fp);
+        fclose(fp);
+        return 1;
     }
 
     int Buffer::GetHeightNumber(string table_name,string index_name)
     {
-        //TODO
-        return 0;
+        int i=__IsInBuffer(table_name,INDEX,index_name,0);
+        if(i==-1)
+        {
+            i=__FindAvailableBufferBlock(table_name);
+            string filename=__GetFilename(table_name,INDEX,index_name);
+            FILE* fp=fopen(filename.c_str(),"rb+");
+            fseek(fp,0,SEEK_SET);
+            fread(__buffer[i],4096,1,fp);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __index[i]=index_name;
+            __type[i]=INDEX;
+            __block[i]=0;
+            fclose(fp);
+        }
+        int height;
+        memcpy(&height,__buffer[i]+sizeof(int),sizeof(int));
+        return height;
     }
 
     int Buffer::SetHeightNumber(string table_name,string index_name,int height)
     {
-        //TODO
-        return 0;
+        string filename=__GetFilename(table_name,INDEX,index_name);
+        FILE* fp=fopen(filename.c_str(),"rb+");
+        int i=__IsInBuffer(table_name,INDEX,index_name,0);
+        if(i==-1)
+        {
+            i=__FindAvailableBufferBlock(table_name);
+            fseek(fp,0,SEEK_SET);
+            fread(__buffer[i],4096,1,fp);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __index[i]=index_name;
+            __type[i]=INDEX;
+            __block[i]=0;
+        }
+        memcpy(__buffer[i]+sizeof(int),&height,sizeof(int));
+        fwrite(__buffer[i],4096,1,fp);
+        fclose(fp);
+        return 1;
     }
 
     int Buffer::GetEmptyIndexBlock(string table_name,string index_name)
     {
-        //TODO
-        return 0;
+        string filename=__GetFilename(table_name,INDEX,index_name);
+        FILE* fp=fopen(filename.c_str(),"rb+");
+        int i=__IsInBuffer(table_name,INDEX,index_name,0);
+        if(i==-1)
+        {
+            i=__FindAvailableBufferBlock(table_name);
+            fseek(fp,0,SEEK_SET);
+            fread(__buffer[i],4096,1,fp);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __index[i]=index_name;
+            __type[i]=INDEX;
+            __block[i]=0;
+        }
+        int empty;
+        memcpy(&empty,__buffer[i]+2*sizeof(int),sizeof(int));
+        int next=empty+1;
+        memcpy(__buffer[i]+2*sizeof(int),&next,sizeof(int));
+        fwrite(__buffer[i],4096,1,fp);
+        fclose(fp);
+        return empty;
     }
 
     int Buffer::ReadIndexBlock(string table_name,string index_name,int block,char* content)
     {
-        //TODO
-        return 0;
+        int i=__IsInBuffer(table_name,INDEX,index_name,block);
+        if(i==-1)
+        {
+            i=__FindAvailableBufferBlock(table_name);
+            string filename=__GetFilename(table_name,INDEX,index_name);
+            FILE* fp=fopen(filename.c_str(),"rb+");
+            fseek(fp,block*4096,SEEK_SET);
+            fread(__buffer[i],4096,1,fp);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __index[i]=index_name;
+            __type[i]=INDEX;
+            __block[i]=block;
+            fclose(fp);
+        }
+        memcpy(content,__buffer[i],4096);
+        return 1;
     }
 
     int Buffer::WriteIndexBlock(string table_name,string index_name,int block,char* content)
     {
-        //TODO
-        return 0;
+        int i=__IsInBuffer(table_name,INDEX,index_name,block);
+        if(i==-1)
+        {
+            i=__FindAvailableBufferBlock(table_name);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __index[i]=index_name;
+            __type[i]=INDEX;
+            __block[i]=block;
+        }
+        memcpy(__buffer[i],content,4096);
+        string filename=__GetFilename(table_name,INDEX,index_name);
+        FILE* fp=fopen(filename.c_str(),"rb+");
+        fseek(fp,block*4096,SEEK_SET);
+        fwrite(__buffer[i],4096,1,fp);
+        fclose(fp);
+        return 1;
     }
 
     int Buffer::ReadDataBlock(string table_name,int block,char* content)

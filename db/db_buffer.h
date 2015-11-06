@@ -16,8 +16,8 @@ namespace db
             int ReadCatalogBlock(std::string table_name,char* content);
             int WriteCatalogBlock(std::string table_name,char* content);
 
-            int CreateIndex(std::string table_name,std::string index);
-            int DropIndex(std::string table_name,std::string index);
+            int CreateIndex(std::string table_name,std::string index_name);
+            int DropIndex(std::string table_name,std::string index_name);
 
             int GetRootNumber(std::string table_name,std::string index_name);
             int SetRootNumber(std::string table_name,std::string index_name,int block);
@@ -34,6 +34,7 @@ namespace db
             int SetAvailableDataBlock(std::string table_name,int block);
         private:
             char *__buffer[100];
+            char *__zero_block;
             std::string __table[100];
             std::string __index[100];
             int __type[100];

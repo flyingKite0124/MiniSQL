@@ -42,6 +42,14 @@ enum DB_OPERATION_TYPE {
   TYPE_EXECUTE
 };
 
+// File type
+enum DB_FILE_TYPE {
+    CATALOG,
+    INDEX,
+    DATA,
+    DATAPAGE
+};
+
 // Relations
 enum RELATION {
   LT, LTE, GT, GTE, NEQ, EQ

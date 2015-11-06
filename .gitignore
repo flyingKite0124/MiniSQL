@@ -36,4 +36,5 @@ minisql
 tags
 Makefile.test
 test.cc
-
+data/*
+!data/.gitkeep

@@ -54,4 +54,4 @@ namespace db
             std::string __GetFilename(std::string table_name,int type);
     };
 }
-#endif //DB_DB_BUFFER_H
+#endif  // DB_DB_BUFFER_H

@@ -43,8 +43,11 @@ db_repl.o: db/db_repl.cc db/db_repl.h
 db_process.o: db/db_process.cc db/db_process.h
 	$(CPP) $(CPPFLAGS) -c db/db_process.cc -o db/db_process.o
 
-db: io.o string.o command_line.o db_type.o db_buffer.o db_catalog.o db_index.o db_global.o db_main.o db_help.o db_repl.o db_process.o
+db_record.o: db/db_record.cc db/db_record.h
+	$(CPP) $(CPPFLAGS) -c db/db_record.cc -o db/db_record.o
+
+db: io.o string.o command_line.o db_type.o db_buffer.o db_catalog.o db_index.o db_global.o db_main.o db_help.o db_repl.o db_process.o db_record.o
 	$(CPP) $(CPPFLAGS) base/io.o base/string.o base/command_line.o db/db_type.o \
 	db/db_buffer.o db/db_catalog.o db/db_index.o db/db_global.o db/db_main.o db/db_help.o db/db_repl.o \
-	db/db_process.o \
+	db/db_process.o db/db_record.o \
 	-o minisql -lreadline

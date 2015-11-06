@@ -343,7 +343,7 @@ namespace db
                 }
             }
         }
-        WriteDataPageBlock(table_name,size+1,__zero_block);
+        WriteDataPageBlock(table_name,size,__zero_block);
         delete[] content;
         return size*4096;
     }

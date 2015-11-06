@@ -15,6 +15,15 @@ namespace db
     int DeleteRecordAll(Table table);
     TupleList DeleteRecordLinear(Table table,Filter filter);
     TupleList DeleteRecordByList(Table table,std::string attr_name,IndexPairList pairs);
+    
+
+    int __GetSizeOfOneTuple(Table table);
+    int __GetNumOfTuplesInOneBlock(Table table);
+
+    Tuple __ParserOneTuple(Table table,char *content,int num);
+    TupleList __ParserOneBlock(Table table,char *content);
+    int __FilterOneTupleByOneFilter(Table table,Filter filter);
+    int __FilterOneTuple(Table table,FilterList filters);
 }
 
 #endif  // DB_DB_RECORD_H

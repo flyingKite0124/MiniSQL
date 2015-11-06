@@ -27,11 +27,16 @@ namespace db
             int ReadIndexBlock(std::string table_name,std::string index_name,int block,char* content);
             int WriteIndexBlock(std::string table_name,std::string index_name,int block,char* content);
 
+            int RecreateDataFile(std::string table_name);
             int ReadDataBlock(std::string table_name,int block,char* content);
             int WriteDataBlock(std::string table_name,int block,char* content);
+            int ReadDataPageBlock(std::string table_name,int block,char* content);
+            int WriteDataPageBlock(std::string table_name,int block,char* content);
             int GetAvailableDataBlock(std::string table_name);
             int SetFullDataBlock(std::string table_name,int block);
             int SetAvailableDataBlock(std::string table_name,int block);
+            int GetDataFileSize(std::string table_name);
+            int GetDataPageFileSize(std::string table_name);
         private:
             char *__buffer[100];
             char *__zero_block;

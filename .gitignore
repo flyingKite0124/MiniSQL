@@ -33,8 +33,11 @@ CMakeLists.txt
 *.app
 
 minisql
+
 tags
+Makefile.bak
 Makefile.test
 test.cc
+
 data/*
 !data/.gitkeep

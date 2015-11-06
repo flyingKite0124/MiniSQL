@@ -33,13 +33,13 @@ namespace db
             int SetFullDataBlock(std::string table_name,int block);
             int SetAvailableDataBlock(std::string table_name,int block);
         private:
-            unsigned char space[100][4000];
-            std::string table_name[100];
-            std::string index_name[100];
-            int type[100];
-            int block[100];
-            int valid[100];
-            int pointer;
+            char *__buffer[100];
+            std::string __table[100];
+            std::string __index[100];
+            int __type[100];
+            int __block[100];
+            int __valid[100];
+            int __pointer;
             int __IsInBuffer(std::string table_name,int type,std::string index_name,int block);
             int __IsInBuffer(std::string table_name,int type,int block);
             int __IsInBuffer(std::string table_name,int type);

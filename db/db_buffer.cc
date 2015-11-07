@@ -48,7 +48,6 @@ namespace db
         fclose(fopen(__GetFilename(table_name,DATA).c_str(),"wb"));
         fclose(fopen(__GetFilename(table_name,DATAPAGE).c_str(),"wb"));
         CreateIndex(table_name,primary_key);
-        WriteDataBlock(table_name,0,zero_block);
         WriteDataPageBlock(table_name,0,zero_block);
         return 1;
     }
@@ -245,7 +244,6 @@ namespace db
         fclose(fopen(filename.c_str(),"wb"));
         filename=__GetFilename(table_name,DATAPAGE);
         fclose(fopen(filename.c_str(),"wb"));
-        WriteDataBlock(table_name,0,zero_block);
         WriteDataPageBlock(table_name,0,zero_block);
         return 1;
     }
@@ -344,13 +342,18 @@ namespace db
                 if(available==EMPTY||available==USED)
                 {
                     delete[] content;
-                    return i*4096+j;
+                    int block=i*4096+j;
+                    if(block>=GetDataFileSize(table_name))
+                        WriteDataBlock(table_name,block,zero_block);
+                    return block;
                 }
             }
         }
         WriteDataPageBlock(table_name,size,zero_block);
         delete[] content;
-        return size*4096;
+        int block=size*4096;
+        WriteDataBlock(table_name,block,zero_block);
+        return block;
     }
 
     int Buffer::SetDataBlockState(string table_name,int block,char state)

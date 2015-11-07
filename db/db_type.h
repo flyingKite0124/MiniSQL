@@ -164,7 +164,7 @@ public:
 class SelectFromOperation: public Operation {
 private:
   std::string table_name;
-  std::vector<Filter> filters;
+  FilterList filters;
 public:
   SelectFromOperation(std::string command);
   int Execute();
@@ -174,7 +174,7 @@ public:
 class DeleteFromOperation: public Operation {
 private:
   std::string table_name;
-  std::vector<Filter> filters;
+  FilterList filters;
 public:
   DeleteFromOperation(std::string command);
   int Execute();

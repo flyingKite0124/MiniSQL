@@ -11,15 +11,16 @@ namespace db
     int InsertRecord(Table table,Tuple tuple);
     TupleList SelectRecordLinearOr(Table table,FilterList filters);
     TupleList SelectRecordLinear(Table table,FilterList filters);
-    TupleList SelectRecordByList(Table table ,std::string attr_name,IndexPairList pairs);
+    TupleList SelectRecordByList(Table table ,std::string attr_name,IndexPairList pairs,FilterList filters);
     int DeleteRecordAll(Table table);
     TupleList DeleteRecordLinear(Table table,Filter filter);
     TupleList DeleteRecordByList(Table table,std::string attr_name,IndexPairList pairs);
     
+    TupleList __LinearSelect(Table table,FilterList filters,int option);
 
     int __GetSizeOfOneTuple(Table table);
     int __GetNumOfTuplesInOneBlock(Table table);
-    int __CheckOneTupleValid(Table table,char* content,int num);
+    char __CheckOneTupleValid(Table table,char* content,int num);
     char __GetStateOfOneBlock(Table table,char* content);
 
     Tuple __ParserOneTuple(Table table,char *content,int num,int block);

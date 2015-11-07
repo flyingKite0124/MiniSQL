@@ -41,3 +41,5 @@ test.cc
 
 data/*
 !data/.gitkeep
+
+test/bigdata.sql

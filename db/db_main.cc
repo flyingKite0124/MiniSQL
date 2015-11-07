@@ -31,12 +31,12 @@ int main(int argc, const char* argv[]) {
   attr1.size = 4;
   attr1.attribute_type = db::TYPE_INDEXED;
   db::Attribute attr2;
-  attr2.name = "id";
+  attr2.name = "id1";
   attr2.type = db::TYPE_FLOAT;
   attr2.size = 4;
   attr2.attribute_type = db::TYPE_INDEXED;
   db::Attribute attr3;
-  attr3.name = "id";
+  attr3.name = "id2";
   attr3.type = db::TYPE_CHAR;
   attr3.size = 255;
   attr3.attribute_type = db::TYPE_INDEXED;
@@ -49,12 +49,23 @@ int main(int argc, const char* argv[]) {
 
   db::BufferDelegate.CreateTable(indexTestTable.GetName(), attrName);
   db::CreateIndex(indexTestTable, attrName);
-  db::IndexPair w1 = std::pair<int, std::string>(1, db::__IntToString(1));
-  db::IndexPair w2 = std::pair<int, std::string>(2, db::__IntToString(2));
+
+  for(int i=0; i<20000; i++) {
+    db::IndexPair w = std::pair<int, std::string>(i, db::__IntToString(i));
+    db::InsertIndex(indexTestTable, attrName, w);
+  }
+
+  for(int i=0; i<19999; i++) {
+    db::IndexPair w = std::pair<int, std::string>(i, db::__IntToString(i));
+    db::DeleteIndex(indexTestTable, attrName, w);
+  }
 
 
-  db::InsertIndex(indexTestTable, attrName, w1);
-  db::InsertIndex(indexTestTable, attrName, w2);
+  for(int i=0; i<20000; i++) {
+    db::Filter f("id = 0");
+    f.value = db::__IntToString(i);
+    db::_Index_SelectIntNode(indexTestTable, attrName, f);
+  }
 
   // TODO: GreysTone[Remove]
 

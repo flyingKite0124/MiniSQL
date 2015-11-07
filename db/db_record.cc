@@ -13,7 +13,7 @@ namespace db
 {
     int InsertRecord(Table table,Tuple tuple)
     {
-        char content[4096];
+        char *content=new char[4096];
         int block=BufferDelegate.GetAvailableDataBlock(table.GetName());
         BufferDelegate.ReadDataBlock(table.GetName(),block,content);
         int tuple_num=__GetNumOfTuplesInOneBlock(table);
@@ -27,6 +27,7 @@ namespace db
         BufferDelegate.WriteDataBlock(table.GetName(),block,content);
         char state=__GetStateOfOneBlock(table,content);
         BufferDelegate.SetDataBlockState(table.GetName(),block,state);
+        delete[] content;
 
         return block;
     }
@@ -50,7 +51,7 @@ namespace db
         int tuple_num=__GetNumOfTuplesInOneBlock(table);
         for(int i=0;i<pairs_num;i++)
         {
-            Filter filter(attr_name+"="+pairs[i].second);
+            Filter filter(attr_name+" = "+pairs[i].second);
             int block=pairs[i].first;
             BufferDelegate.ReadDataBlock(table.GetName(),block,content);
             for(int j=0;j<tuple_num;j++)
@@ -124,7 +125,7 @@ namespace db
         int tuple_num=__GetNumOfTuplesInOneBlock(table);
         for(int i=0;i<pairs_num;i++)
         {
-            Filter filter(attr_name+"="+pairs[i].second);
+            Filter filter(attr_name+" = "+pairs[i].second);
             int block=pairs[i].first;
             BufferDelegate.ReadDataBlock(table.GetName(),block,content);
             for(int j=0;j<tuple_num;j++)
@@ -203,12 +204,12 @@ namespace db
         return 4096/(__GetSizeOfOneTuple(table)+1);
     }
     
-    int __CheckOneTupleValid(Table table,char* content,int num)
+    char __CheckOneTupleValid(Table table,char* content,int num)
     {
         int tuple_size=__GetSizeOfOneTuple(table);
         char valid;
         memcpy(&valid,content+num*(tuple_size+1),sizeof(char));
-        return (int)valid;
+        return valid;
     }
 
     char __GetStateOfOneBlock(Table table,char *content)
@@ -222,11 +223,11 @@ namespace db
                     count++;
         }
         if(count==0)
-            state=0;
-        else if(count<tuple_num)
-            state=1;
-        else
-            state=2;
+            state=EMPTY;
+        else if(count<tuple_num&&count>0)
+            state=USED;
+        else if(count==tuple_num)
+            state=FULL;
         return state;
     }
 
@@ -313,7 +314,7 @@ namespace db
             else if(attr.type==TYPE_FLOAT)
             {
                 float val=__StringToFloat(tuple.second[i]);
-                memcpy(&val,content+num*(tuple_size+1)+offset,attr.size);
+                memcpy(content+num*(tuple_size+1)+offset,&val,attr.size);
                 offset+=attr.size;
             }
             else if(attr.type==TYPE_CHAR)

@@ -20,7 +20,7 @@ namespace db
 
     int __GetSizeOfOneTuple(Table table);
     int __GetNumOfTuplesInOneBlock(Table table);
-    int __CheckOneTupleValid(Table table,char* content,int num);
+    char __CheckOneTupleValid(Table table,char* content,int num);
     char __GetStateOfOneBlock(Table table,char* content);
 
     Tuple __ParserOneTuple(Table table,char *content,int num,int block);

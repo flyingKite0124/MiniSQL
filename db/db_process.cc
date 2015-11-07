@@ -1,5 +1,6 @@
 #include "db/db_process.h"
 
+#include <sys/time.h>
 #include <stdexcept>
 #include <iostream>
 using namespace std;
@@ -39,7 +40,15 @@ int DBProcess(string command) {
     return SYNTAX_ERROR;
   }
   try {
-    return op->Execute();
+    timeval start, end;
+    // Benchmark
+    gettimeofday(&start, NULL);
+    int ret = op->Execute();
+    gettimeofday(&end, NULL);
+    DEBUG << "Process `" + command + "` OK! " <<
+    1000 * (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000 <<
+    " ms used." << endl;
+    return ret;
   } catch (runtime_error& e) {
     cout << "Runtime Error: " << e.what() << endl;
     return RUNTIME_ERROR;

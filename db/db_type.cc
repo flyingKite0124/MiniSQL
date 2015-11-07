@@ -136,32 +136,38 @@ CreateTableOperation::CreateTableOperation(string command) {
                                "` is not a valid atrribute name.");
       }
       string rest;
-      size_t pos;
+      size_t pos, rpos;
       getline(in, rest, '\0');
       rest = String::Trim(rest);
-      if ((pos = rest.find('(')) != string::npos) {
+      if ((pos = rest.find('(')) != string::npos &&
+          (rpos = rest.find(')')) != string::npos) {
         string type = String::Trim(rest.substr(0, pos));
         if (type != "char") {
           throw invalid_argument("Only the size of `char` can be specified.");
         }
         attr.type = TYPE_CHAR;
-        attr.size = String::ToInt(String::TakeOffBracket(rest.substr(pos)));
+        attr.size = String::ToInt(String::TakeOffBracket(rest.substr(pos, rpos - pos + 1)));
+        if (rpos + 1 < rest.length())
+          rest = rest.substr(rpos + 1);
+        else
+          rest = "";
       } else {
-        if (rest == "int") {
+        istringstream rin(rest);
+        string rcur;
+        rin >> rcur;
+        if (rcur == "int") {
           attr.type = TYPE_INT;
           attr.size = 4;
-        } else if (rest == "float") {
+        } else if (rcur == "float") {
           attr.type = TYPE_FLOAT;
           attr.size = 4;
         } else {
-          if (rest == "") {
-            throw invalid_argument("Attribute `" + attr.name +
-                                   "` needs a type.");
-          } else {
-            throw invalid_argument("Type `" + rest + "` is not a valid type.");
-          }
+          throw invalid_argument("Attribute `" + attr.name + "` needs a type.");
         }
+        rin >> rest;
       }
+      if (String::Trim(rest) == "unique")
+        attr.attribute_type = TYPE_UNIQUE;
       attr_list.push_back(attr);
     }
   }
@@ -321,6 +327,22 @@ int InsertIntoOperation::Execute() {
   Table table;
   if (!Catalog::GetTable(table_name, table))
     throw runtime_error("Table `" + table_name + "` is not found.");
+  auto attributes = table.GetAttributes();
+  // Value size
+  if (values.size() != attributes.size())
+    throw runtime_error("The size of values provided is not matched to table.");
+  // Unique test
+  FilterList filters;
+  int count = 0;
+  for (auto& attribute: attributes) {
+    // Not TYPE_NONE
+    if (attribute.attribute_type) {
+      filters.push_back(Filter(attribute.name + " = " + values[count++]));
+    }
+  }
+  if (SelectRecordLinearOr(table, filters).size() > 0) {
+    throw runtime_error("Unique constraints are not fulfilled.");
+  }
   InsertRecord(table, make_pair(-1, values));
   // TODO: Insert Index
   cout << "Insert 1 record successfully." << endl;
@@ -418,6 +440,9 @@ DeleteFromOperation::DeleteFromOperation(string command) {
       filters.push_back(Filter(String::Trim(filter)));
     }
   }
+  if (filters.size() > 1) {
+    throw invalid_argument("More than one filters are not allowed.");
+  }
   DEBUG << "Parsed: delete from" << endl;
   DEBUG << "Table name: " << table_name << endl;
   DEBUG << "Filters: " << endl;
@@ -432,7 +457,16 @@ int DeleteFromOperation::Execute() {
   Table table;
   if (!Catalog::GetTable(table_name, table))
     throw runtime_error("Table `" + table_name + "` is not found.");
-  throw runtime_error("Operation `delete from` is not implemented.");
+  if (filters.size() == 0) {
+    DeleteRecordAll(table);
+    // TODO: Index
+    return 0;
+  }
+  // TODO: With index
+  // Without index
+  TupleList tuples = DeleteRecordLinear(table, filters[0]);
+  cout << "Delete OK! " << tuples.size() << " records deleted." << endl;
+  return 0;
 }
 
 // Execfile Class

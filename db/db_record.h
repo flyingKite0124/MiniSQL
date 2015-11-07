@@ -16,6 +16,7 @@ namespace db
     TupleList DeleteRecordLinear(Table table,Filter filter);
     TupleList DeleteRecordByList(Table table,std::string attr_name,IndexPairList pairs);
     
+    TupleList __LinearSelect(Table table,FilterList filters,int option);
 
     int __GetSizeOfOneTuple(Table table);
     int __GetNumOfTuplesInOneBlock(Table table);

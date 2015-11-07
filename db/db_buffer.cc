@@ -344,13 +344,18 @@ namespace db
                 if(available==EMPTY||available==USED)
                 {
                     delete[] content;
-                    return i*4096+j;
+                    int block=i*4096+j;
+                    if(block>GetDataFileSize(table_name))
+                        WriteDataBlock(table_name,block,zero_block);
+                    return block;
                 }
             }
         }
         WriteDataPageBlock(table_name,size,zero_block);
         delete[] content;
-        return size*4096;
+        int block=size*4096;
+        WriteDataBlock(table_name,block,zero_block);
+        return block;
     }
 
     int Buffer::SetDataBlockState(string table_name,int block,char state)

@@ -1,5 +1,6 @@
 #include "db/db_record.h"
 #include "db/db_type.h"
+#include "db/db_global.h"
 
 #include <cstring>
 #include <sstream>
@@ -12,38 +13,175 @@ namespace db
 {
     int InsertRecord(Table table,Tuple tuple)
     {
-        //TODO
-        return 0;
+        char content[4096];
+        int block=BufferDelegate.GetAvailableDataBlock(table.GetName());
+        BufferDelegate.ReadDataBlock(table.GetName(),block,content);
+        int tuple_num=__GetNumOfTuplesInOneBlock(table);
+        int i;
+        for(i=0;i<tuple_num;i++)
+        {
+            if(__CheckOneTupleValid(table,content,i)==0)
+                break;
+        }
+        __SetOneTuple(table,content,tuple,i);
+        BufferDelegate.WriteDataBlock(table.GetName(),block,content);
+        char state=__GetStateOfOneBlock(table,content);
+        BufferDelegate.SetDataBlockState(table.GetName(),block,state);
+
+        return block;
     }
+
     TupleList SelectRecordLinearOr(Table table,FilterList filters)
     {
-        //TODO
+        return __LinearSelect(table,filters,OR);
     }
 
     TupleList SelectRecordLinear(Table table,FilterList filters)
     {
-        //TODO
+        return __LinearSelect(table,filters,AND);
     }
 
     TupleList SelectRecordByList(Table table ,string attr_name,IndexPairList pairs)
     {
-        //TODO
+        TupleList tuples;
+        Tuple tuple;
+        char content[4096];
+        int pairs_num=pairs.size();
+        int tuple_num=__GetNumOfTuplesInOneBlock(table);
+        for(int i=0;i<pairs_num;i++)
+        {
+            Filter filter(attr_name+"="+pairs[i].second);
+            int block=pairs[i].first;
+            BufferDelegate.ReadDataBlock(table.GetName(),block,content);
+            for(int j=0;j<tuple_num;j++)
+            {
+                if(__CheckOneTupleValid(table,content,j))
+                {
+                    tuple=__ParserOneTuple(table,content,j,block);
+                    if(__FilterOneTupleByOneFilter(table,tuple,filter))
+                        tuples.push_back(tuple);
+                }
+            }
+        }
+        return tuples;
     }
 
     int DeleteRecordAll(Table table)
     {
-        //TODO
-        return 0;
+        BufferDelegate.RecreateDataFile(table.GetName());
+        return 1;
     }
 
     TupleList DeleteRecordLinear(Table table,Filter filter)
     {
-        //TODO
+        TupleList tuples;
+        Tuple tuple;
+        char data_page_content[4096];
+        char data_content[4096];
+
+        int data_page_blocks=BufferDelegate.GetDataPageFileSize(table.GetName());
+        int tuple_num=__GetNumOfTuplesInOneBlock(table);
+        for(int i=0;i<data_page_blocks;i++)
+        {
+            BufferDelegate.ReadDataPageBlock(table.GetName(),i,data_page_content);
+            vector<int> used_list;
+            char state;
+            for(int j=0;j<4096;j++)
+            {
+                memcpy(&state,data_page_content+j,sizeof(char));
+                if(state!=0)
+                    used_list.push_back(j);
+            }
+            for(int j=0;j<used_list.size();j++)
+            {
+                BufferDelegate.ReadDataBlock(table.GetName(),i*4096+j,data_content);
+                for(int k=0;k<tuple_num;k++)
+                {
+                    if(__CheckOneTupleValid(table,data_content,k))
+                    {
+                        tuple=__ParserOneTuple(table,data_content,k,i*4096+j);
+                        if(__FilterOneTupleByOneFilter(table,tuple,filter))
+                        {
+                            tuples.push_back(tuple);
+                            __DeleteOneTuple(table,data_content,k);
+                            state=__GetStateOfOneBlock(table,data_content);
+                            BufferDelegate.SetDataBlockState(table.GetName(),i*4096+j,state);
+                        }
+                    }
+                }
+                BufferDelegate.WriteDataBlock(table.GetName(),i*4096+j,data_content);
+            }
+        }
+        return tuples;
     }
 
     TupleList DeleteRecordByList(Table table,string attr_name,IndexPairList pairs)
     {
-        //TODO
+        TupleList tuples;
+        Tuple tuple;
+        char content[4096];
+        int pairs_num=pairs.size();
+        int tuple_num=__GetNumOfTuplesInOneBlock(table);
+        for(int i=0;i<pairs_num;i++)
+        {
+            Filter filter(attr_name+"="+pairs[i].second);
+            int block=pairs[i].first;
+            BufferDelegate.ReadDataBlock(table.GetName(),block,content);
+            for(int j=0;j<tuple_num;j++)
+            {
+                if(__CheckOneTupleValid(table,content,j))
+                {
+                    tuple=__ParserOneTuple(table,content,j,block);
+                    if(__FilterOneTupleByOneFilter(table,tuple,filter))
+                    {
+                        tuples.push_back(tuple);
+                        __DeleteOneTuple(table,content,j);
+                        char state=__GetStateOfOneBlock(table,content);
+                        BufferDelegate.SetDataBlockState(table.GetName(),i*4096+j,state);
+                        break;
+                    }
+                }
+            }
+            BufferDelegate.WriteDataBlock(table.GetName(),block,content);
+        }
+        return tuples;
+    }
+
+    TupleList __LinearSelect(Table table,FilterList filters,int option)
+    {
+        TupleList tuples;
+        Tuple tuple;
+        char data_page_content[4096];
+        char data_content[4096];
+
+        int data_page_blocks=BufferDelegate.GetDataPageFileSize(table.GetName());
+        int tuple_num=__GetNumOfTuplesInOneBlock(table);
+        for(int i=0;i<data_page_blocks;i++)
+        {
+            BufferDelegate.ReadDataPageBlock(table.GetName(),i,data_page_content);
+            vector<int> used_list;
+            char state;
+            for(int j=0;j<4096;j++)
+            {
+                memcpy(&state,data_page_content+j,sizeof(char));
+                if(state!=0)
+                    used_list.push_back(j);
+            }
+            for(int j=0;j<used_list.size();j++)
+            {
+                BufferDelegate.ReadDataBlock(table.GetName(),i*4096+j,data_content);
+                for(int k=0;k<tuple_num;k++)
+                {
+                    if(__CheckOneTupleValid(table,data_content,k))
+                    {
+                        tuple=__ParserOneTuple(table,data_content,k,i*4096+j);
+                        if(__FilterOneTuple(table,tuple,filters,option))
+                            tuples.push_back(tuple);
+                    }
+                }
+            }
+        }
+        return tuples;
     }
 
     int __GetSizeOfOneTuple(Table table)

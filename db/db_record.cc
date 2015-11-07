@@ -388,7 +388,7 @@ namespace db
                         break;
             }
         }
-        else if(attrs[index].type==TYPE_INT)
+        else if(attrs[index].type==TYPE_CHAR)
         {
             string left=tuple.second[index];
             string right=filter.value;

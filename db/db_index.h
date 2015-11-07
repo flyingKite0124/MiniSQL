@@ -45,17 +45,20 @@ typedef struct bpt_int_node {
     int countKey;
 } BPT_INT;
 
-//typedef struct bplustree_char_node {
-//    node_types node_type;
-//    std::map<std::string, int> dptr;
-//    int next_ptr;
-//} BPT_CharNode;
-//
-//typedef struct bplustree_float_node {
-//    node_types node_type;
-//    std::map<float, int> dptr;
-//    int next_ptr;
-//} BPT_FloatNode;
+typedef struct bpt_char_node {
+    bool isLeaf;
+    std::string key[CHAR_STRI_ORDER];
+    int pointer[CHAR_STRI_ORDER+1];
+    int countKey;
+} BPT_CHAR;
+
+typedef struct bpt_float_node {
+    bool isLeaf;
+    float key[INT_FLOAT_ORDER];
+    int pointer[INT_FLOAT_ORDER+1];
+    int countKey;
+} BPT_FLOAT;
+
 
 class Index_Header {
 public:
@@ -75,17 +78,32 @@ public:
 };
 
 void PrintIntIndex(Index_Header *index);
-void _IndexReadIntBlock(Index_Header idx, BPT_INT *node, int pos);
-void _IndexWriteIntBlock(Index_Header idx, BPT_INT *node, int pos);
 
-int CreateIndex(Table table, std::string attr_name);
+void _IndexReadBlock(Index_Header idx, BPT_INT *node, int pos);
+void _IndexWriteBlock(Index_Header idx, BPT_INT *node, int pos);
+void _IndexReadBlock(Index_Header idx, BPT_CHAR *node, int pos);
+void _IndexWriteBlock(Index_Header idx, BPT_CHAR *node, int pos);
+void _IndexReadBlock(Index_Header idx, BPT_FLOAT *node, int pos);
+void _IndexWriteBlock(Index_Header idx, BPT_FLOAT *node, int pos);
+
+int CreateIntIndex(Table table, std::string attr_name);
+int CreateCharIndex(Table table, std::string attr_name);
+int CreateFloatIndex(Table table, std::string attr_name);
 int DropIndex(Table table, std::string attr_name);
 
-int InsertIndex(Table table, std::string attr_name,IndexPair pair);
-int DeleteIndex(Table table, std::string attr_name,IndexPair pair);
+int InsertIntIndex(Table table, std::string attr_name,IndexPair pair);
+int InsertCharIndex(Table table, std::string attr_name,IndexPair pair);
+int InsertFloatIndex(Table table, std::string attr_name,IndexPair pair);
+int DeleteIntIndex(Table table, std::string attr_name,IndexPair pair);
+int DeleteCharIndex(Table table, std::string attr_name,IndexPair pair);
+int DeleteFloatIndex(Table table, std::string attr_name,IndexPair pair);
 IndexPairList _Index_SelectIntNode(Table table, std::string attr_name, Filter filter);
+IndexPairList _Index_SelectCharNode(Table table, std::string attr_name, Filter filter);
+IndexPairList _Index_SelectFloatNode(Table table, std::string attr_name, Filter filter);
 
-int RecreateIndex(Table table, std::string attr_name);
+int RecreateIntIndex(Table table, std::string attr_name);
+int RecreateCharIndex(Table table, std::string attr_name);
+int RecreateFloatIndex(Table table, std::string attr_name);
 
 } // namespace db
 

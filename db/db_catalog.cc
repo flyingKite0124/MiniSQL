@@ -22,14 +22,16 @@ void StringifyTable(Table table, char* chunk) {
     chunk[idx++] = attr.size;
     chunk[idx++] = attr.attribute_type;
     strcpy(chunk + idx, attr.name.c_str());
-    idx += 64;
+    idx += 32;
+    strcpy(chunk + idx, attr.index_name.c_str());
+    idx += 32;
   }
 }
 
 Table ParseTable(string table_name, char* chunk) {
   int idx = 0;
   int attr_length = chunk[idx++];
-  char tmp[128];
+  char tmp[64];
   memset(tmp, 0, sizeof(tmp));
   vector<Attribute> attr_list;
   for (int i = 0; i < attr_length; ++i) {
@@ -37,9 +39,12 @@ Table ParseTable(string table_name, char* chunk) {
     attr.type = (DB_DATA_TYPE)chunk[idx++];
     attr.size = (int)chunk[idx++];
     attr.attribute_type = (DB_ATTRIBUTE_TYPE)chunk[idx++];
-    memcpy(tmp, chunk + idx, 64);
-    idx += 64;
+    memcpy(tmp, chunk + idx, 32);
+    idx += 32;
     attr.name = string(tmp);
+    memcpy(tmp, chunk + idx, 32);
+    idx += 32;
+    attr.index_name = string(tmp);
     attr_list.push_back(attr);
   }
   Table table(table_name, attr_list);

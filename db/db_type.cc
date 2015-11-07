@@ -131,7 +131,7 @@ CreateTableOperation::CreateTableOperation(string command) {
       istringstream in(s);
       in >> attr.name;
       // Check if attribute_name is valid.
-      if (!String::IsWord(attr.name) || attr.name.length() > 64) {
+      if (!String::IsWord(attr.name)) {
         throw invalid_argument("`" + attr.name +
                                "` is not a valid atrribute name.");
       }

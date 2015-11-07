@@ -6,10 +6,12 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 using namespace std;
 
-#include "db/db_catalog.h"
 #include "db/db_main.h"
+#include "db/db_catalog.h"
+#include "db/db_record.h"
 #include "db/db_repl.h"
 #include "base/string.h"
 
@@ -311,7 +313,8 @@ int InsertIntoOperation::Execute() {
   Table table;
   if (!Catalog::GetTable(table_name, table))
     throw runtime_error("Table `" + table_name + "` is not found.");
-  throw runtime_error("Operation `insert into` is not implemented.");
+  InsertRecord(table, make_pair(-1, values));
+  // TODO: Insert Index
   return 0;
 }
 
@@ -355,9 +358,28 @@ SelectFromOperation::SelectFromOperation(string command) {
 }
 int SelectFromOperation::Execute() {
   Table table;
+  int counter;
   if (!Catalog::GetTable(table_name, table))
     throw runtime_error("Table `" + table_name + "` is not found.");
-  throw runtime_error("Operation `select from` is not implemented.");
+  // TODO: With index
+  // Without index
+  TupleList tuples = SelectRecordLinear(table, filters);
+  int columns = table.GetAttributes().size();
+  counter = 0;
+  for (auto& attr: table.GetAttributes()) {
+    ++counter;
+    cout << attr.name << " \t"[counter != columns];
+  }
+  cout << endl;
+  for (auto& tuple: tuples) {
+    counter = 0;
+    for (auto& value: tuple.second) {
+      ++counter;
+      cout << value << " \t"[counter != columns];
+    }
+    cout << endl;
+  }
+  cout << "Query OK!" << endl;
   return 0;
 }
 

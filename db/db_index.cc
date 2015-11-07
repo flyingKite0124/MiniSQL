@@ -20,10 +20,6 @@ Index_Header::Index_Header(Table table, std::string attr_name) {
     height = BufferDelegate.GetHeightNumber(tableName, attrName);
 }
 Index_Header::~Index_Header() {
-    while(!indexPath.empty()) {
-        delete[] indexPath.top().second;
-        indexPath.pop();
-    }
     // TODO: Other Map Index
 }
 
@@ -55,7 +51,7 @@ int RecreateIndex(Table table, std::string attr_name) {
 }
 
 void _Index_ParseIntNode(char *block, BPT_IntNode *parsedBlock) {
-    for(int i = 1; i < INT_FLOAT_ALL; i += 12) {
+    for(int i = 1; i < INT_FLOAT_ALL; i += 8) {
         int data, ptr;
         memcpy(&data, block+i, sizeof(int));
         memcpy(&ptr, block+i+sizeof(int), sizeof(int));
@@ -74,9 +70,8 @@ void _Index_PackageIntNode(BPT_IntNode *parsedBlock, char *block) {
     for(std::map<int, int>::iterator it = parsedBlock->dptr.begin(); it != parsedBlock->dptr.end(); it++) {
         memcpy(block+i, &(it->first), sizeof(int));
         memcpy(block+i+sizeof(int), &(it->second), sizeof(int));
-        i += 12;
+        i += 8;
     }
-    int prev_ptr;
     memcpy(block+INT_FLOAT_ALL, &(parsedBlock->prev_ptr), sizeof(int));
     memcpy(block+INT_FLOAT_ALL+sizeof(int), &(parsedBlock->next_ptr), sizeof(int));
 }
@@ -124,7 +119,7 @@ void PrintIntIndex(Index_Header *index) {
         BPT_IntNode *node = it->second;
         std::cout << "\t\t\tisLeaf:" << node->node_type << std::endl;
         for(std::map<int, int>::iterator itor = node->dptr.begin(); itor != node->dptr.end(); itor++) {
-            std::cout << "\t\t\tKey:" << itor->first <<"- block:" << itor->second << std::endl;
+            std::cout << "\t\t\tKey:" << itor->first <<" - block:" << itor->second << std::endl;
         }
         std::cout << "\t\t}\n";
         tmpIndexPath.pop();
@@ -359,7 +354,6 @@ int InsertIndex(Table table, std::string attr_name, IndexPair pair) {
         std::cout << "[DEBUG]<InsertIndex> currentAddr:" << currentAddr << std::endl;
     }
 
-    PrintIntIndex(&index);
 
     // Insert Leaf Node
     std::stringstream transfer;
@@ -379,6 +373,7 @@ int InsertIndex(Table table, std::string attr_name, IndexPair pair) {
     for(std::list<std::pair<int, char *>>::iterator it = overwritePath.begin(); it != overwritePath.end(); it++) {
         BufferDelegate.WriteIndexBlock(index.tableName, index.attrName, it->first, it->second);
     }
+    // TODO: Maintainance Height
 
     // Recycle Memory
     for(std::list<std::pair<int, char *>>::iterator it = overwritePath.begin(); it != overwritePath.end(); it++) {
@@ -406,6 +401,48 @@ IndexPairList SelectIndex(Table table, std::string attr_name, Filter filter) {
 }
 
 int DeleteIndex(Table table, std::string attr_name, IndexPair pair) {
+    // Get Information of Attribute
+    Index_Header index(table, attr_name);
+    node_types reachedLeafNode = nonleaf;
+    int currentAddr = index.rootAddr;
+
+    // InStack indexPath
+    while (!reachedLeafNode) {
+        char *block = new char[4096];
+        BufferDelegate.ReadIndexBlock(index.tableName, attr_name, currentAddr, block);
+        index.indexPath.push(std::make_pair(currentAddr, block));
+        reachedLeafNode = (node_types) block[0];
+        switch (index.attribute.type) {
+            case TYPE_INT: {
+                // Parsing Index Block
+                BPT_IntNode *parsedBlock = new BPT_IntNode;
+                parsedBlock->node_type = reachedLeafNode;
+                _Index_ParseIntNode(block, parsedBlock);
+                index.indexParsedPathforInt.insert(std::pair<int, BPT_IntNode *>(currentAddr, parsedBlock));
+                // Find Lower Bound
+                std::stringstream transKey;
+                transKey << pair.second;
+                int key;
+                transKey >> key;
+                std::map<int, int>::iterator it = parsedBlock->dptr.lower_bound(key);
+                if (it != parsedBlock->dptr.end()) {    // Found lower bound
+                    currentAddr = it->second;
+                } else {
+                    currentAddr = parsedBlock->prev_ptr;
+                }
+            }
+                break;
+            case TYPE_CHAR: {
+
+            }
+                break;
+            case TYPE_FLOAT: {
+
+            }
+                break;
+        }
+    }
+
     return 1;
 }
 

@@ -4,8 +4,10 @@
 #include "base/command_line.h"
 #include "db/db_help.h"
 #include "db/db_repl.h"
-#include "db_index.h"
-#include "db_type.h"
+#include "db/db_index.h"
+#include "db/db_type.h"
+
+#include "db/db_record.h"
 
 #include <iostream>
 #include <fstream>
@@ -47,13 +49,12 @@ int main(int argc, const char* argv[]) {
 
   db::BufferDelegate.CreateTable(indexTestTable.GetName(), attrName);
   db::CreateIndex(indexTestTable, attrName);
-  stringstream ss;
-  int value = 1;
-  std::string ww;
-  ss << value;
-  ss >> ww;
-  db::IndexPair w = std::pair<int, std::string>(12345, ww);
-  db::InsertIndex(indexTestTable, attrName, w);
+  db::IndexPair w1 = std::pair<int, std::string>(1, db::__IntToString(1));
+  db::IndexPair w2 = std::pair<int, std::string>(2, db::__IntToString(2));
+
+
+  db::InsertIndex(indexTestTable, attrName, w1);
+  db::InsertIndex(indexTestTable, attrName, w2);
 
   // TODO: GreysTone[Remove]
 

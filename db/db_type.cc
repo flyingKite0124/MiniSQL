@@ -123,7 +123,7 @@ CreateTableOperation::CreateTableOperation(string command) {
       istringstream in(s);
       in >> attr.name;
       // Check if attribute_name is valid.
-      if (!String::IsWord(attr.name)) {
+      if (!String::IsWord(attr.name) || attr.name.length() > 64) {
         throw invalid_argument("`" + attr.name +
                                "` is not a valid atrribute name.");
       }
@@ -177,6 +177,7 @@ CreateTableOperation::CreateTableOperation(string command) {
   DEBUG << "========================================================" << endl;
 }
 int CreateTableOperation::Execute() {
+  // DONE.
   Catalog::CreateTable(table);
   return 0;
   // throw runtime_error("Operation `create table` is not implemented.");
@@ -203,6 +204,7 @@ DropTableOperation::DropTableOperation(string command) {
   DEBUG << "==========================================================" << endl;
 }
 int DropTableOperation::Execute() {
+  // DONE.
   Catalog::DropTable(table_name);
   return 0;
 }
@@ -237,7 +239,20 @@ CreateIndexOperation::CreateIndexOperation(string command) {
   DEBUG << "==========================================================" << endl;
 }
 int CreateIndexOperation::Execute() {
+  Table table;
+  if (!Catalog::GetTable(table_name, table))
+    throw runtime_error("Table `" + table_name + "` is not found.");
+  bool found_attr = false;
+  for (auto& attr: table.GetAttributes())
+    if (attr.name == attr_name) {
+      found_attr = true;
+      break;
+    }
+  if (!found_attr)
+    throw runtime_error("Attribute `" + attr_name + "` is not found on `" +
+                        table_name + "`.");
   throw runtime_error("Operation `create index` is not implemented.");
+  return 0;
 }
 
 // Drop Index Class
@@ -262,6 +277,7 @@ DropIndexOperation::DropIndexOperation(string command) {
 }
 int DropIndexOperation::Execute() {
   throw runtime_error("Operation `drop index` is not implemented.");
+  return 0;
 }
 
 // Insert Into Class
@@ -292,7 +308,11 @@ InsertIntoOperation::InsertIntoOperation(string command) {
   DEBUG << "==========================================================" << endl;
 }
 int InsertIntoOperation::Execute() {
+  Table table;
+  if (!Catalog::GetTable(table_name, table))
+    throw runtime_error("Table `" + table_name + "` is not found.");
   throw runtime_error("Operation `insert into` is not implemented.");
+  return 0;
 }
 
 // Select From Class
@@ -334,7 +354,11 @@ SelectFromOperation::SelectFromOperation(string command) {
   DEBUG << "==========================================================" << endl;
 }
 int SelectFromOperation::Execute() {
+  Table table;
+  if (!Catalog::GetTable(table_name, table))
+    throw runtime_error("Table `" + table_name + "` is not found.");
   throw runtime_error("Operation `select from` is not implemented.");
+  return 0;
 }
 
 // Delete From Class
@@ -373,6 +397,9 @@ DeleteFromOperation::DeleteFromOperation(string command) {
   DEBUG << "==========================================================" << endl;
 }
 int DeleteFromOperation::Execute() {
+  Table table;
+  if (!Catalog::GetTable(table_name, table))
+    throw runtime_error("Table `" + table_name + "` is not found.");
   throw runtime_error("Operation `delete from` is not implemented.");
 }
 
@@ -386,6 +413,7 @@ ExecfileOperation::ExecfileOperation(string command) {
   filepath = String::Trim(cur);
 }
 int ExecfileOperation::Execute() {
+  // DONE.
   ifstream fin(filepath);
   if (!fin) {
     throw runtime_error("Fail to open file `" + filepath + "`.");

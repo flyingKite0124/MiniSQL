@@ -42,7 +42,7 @@ namespace db
         return __LinearSelect(table,filters,AND);
     }
 
-    TupleList SelectRecordByList(Table table ,string attr_name,IndexPairList pairs)
+    TupleList SelectRecordByList(Table table ,string attr_name,IndexPairList pairs,FilterList filters)
     {
         TupleList tuples;
         Tuple tuple;
@@ -59,7 +59,7 @@ namespace db
                 if(__CheckOneTupleValid(table,content,j))
                 {
                     tuple=__ParserOneTuple(table,content,j,block);
-                    if(__FilterOneTupleByOneFilter(table,tuple,filter))
+                    if(__FilterOneTupleByOneFilter(table,tuple,filter)&&__FilterOneTuple(table,tuple,filters,AND))
                         tuples.push_back(tuple);
                 }
             }

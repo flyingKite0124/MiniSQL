@@ -10,17 +10,62 @@
 #include "db/db_buffer.h"
 
 #include <iostream>
-#include <string>
+#include <stdexcept>
+#include <cstring>
+#include <sstream>
+
+#include <list>
+#include <map>
+#include <stack>
 #include <vector>
 
 namespace  db {
 
-enum node_types {nleaf = 0, leaf = 1};
-struct BPT_node {
-    node_types type;
-    std::string keys[15];
-    BPT_node *pointers[16];
+enum node_types {nonleaf = 0, leaf = 1};
+// TODO: Move to db_type.h
+
+typedef struct bplustree_int_node {
+    node_types node_type;
+    std::map<int, int> dptr;
+    int next_ptr;
+} BPT_IntNode;
+
+typedef struct bplustree_char_node {
+    node_types node_type;
+    std::map<std::string, int> dptr;
+    int next_ptr;
+} BPT_CharNode;
+
+typedef struct bplustree_float_node {
+    node_types node_type;
+    std::map<float, int> dptr;
+    int next_ptr;
+} BPT_FloatNode;
+
+class Index_Header {
+public:
+    std::string tableName;
+    std::string attrName;
+    Attribute attribute;
+    int rootAddr;
+    int height;
+
+    std::stack<std::pair<int, char *>> indexPath;
+    std::map<int, BPT_IntNode *> indexParsedPathforInt;
+    std::map<int, BPT_CharNode *> indexParsedPathforChar;
+    std::map<int, BPT_FloatNode *> indexParsedPathforFloat;
+
+    explicit Index_Header(Table table, std::string attr_name);
+    virtual ~Index_Header();
 };
+
+//class Index_Header_Int {
+//public:
+//    explicit Index_Header_Int(Table table, std::string attr_name);
+//    virtual ~Index_Header_Int();
+//};
+
+void PrintIntIndex(Index_Header *index);
 
 int CreateIndex(Table table, std::string attr_name);
 int DropIndex(Table table, std::string attr_name);

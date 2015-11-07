@@ -20,8 +20,8 @@ namespace db
             __valid[i]=0;
             __buffer[i]=new char[4096];
         }
-        __zero_block=new char[4096];
-        memset(__zero_block,0,4096);
+        zero_block=new char[4096];
+        memset(zero_block,0,4096);
     }
 
     Buffer::~Buffer()
@@ -30,7 +30,7 @@ namespace db
         {
             delete[] __buffer[i];
         }
-        delete[] __zero_block;
+        delete[] zero_block;
     }
 
     int Buffer::CreateTable(string table_name,string primary_key)
@@ -48,8 +48,8 @@ namespace db
         fclose(fopen(__GetFilename(table_name,DATA).c_str(),"wb"));
         fclose(fopen(__GetFilename(table_name,DATAPAGE).c_str(),"wb"));
         CreateIndex(table_name,primary_key);
-        WriteDataBlock(table_name,0,__zero_block);
-        WriteDataPageBlock(table_name,0,__zero_block);
+        WriteDataBlock(table_name,0,zero_block);
+        WriteDataPageBlock(table_name,0,zero_block);
         return 1;
     }
 
@@ -125,8 +125,13 @@ namespace db
         memcpy(first_block+2*sizeof(int),&num,sizeof(int));
 
         WriteIndexBlock(table_name,index_name,0,first_block);
-        WriteIndexBlock(table_name,index_name,1,__zero_block);
+        char *root_block=new char[4096];
+        memcpy(root_block,zero_block,4096);
+        char leaf=1;
+        memcpy(root_block,&leaf,sizeof(char));
+        WriteIndexBlock(table_name,index_name,1,root_block);
 
+        delete[] root_block;
         delete[] first_block;
 
         return 1;
@@ -240,8 +245,8 @@ namespace db
         fclose(fopen(filename.c_str(),"wb"));
         filename=__GetFilename(table_name,DATAPAGE);
         fclose(fopen(filename.c_str(),"wb"));
-        WriteDataBlock(table_name,0,__zero_block);
-        WriteDataPageBlock(table_name,0,__zero_block);
+        WriteDataBlock(table_name,0,zero_block);
+        WriteDataPageBlock(table_name,0,zero_block);
         return 1;
     }
 
@@ -327,7 +332,7 @@ namespace db
 
     int Buffer::GetAvailableDataBlock(string table_name)
     {
-        char empty;
+        char available;
         char *content=new char[4096];
         int size=GetDataPageFileSize(table_name);
         for(int i=0;i<size;i++)
@@ -335,40 +340,26 @@ namespace db
             ReadDataPageBlock(table_name,i,content);
             for(int j=0;j<4096;j++)
             {
-                memcpy(&empty,content+j*sizeof(char),sizeof(char));
-                if(empty==0)
+                memcpy(&available,content+j*sizeof(char),sizeof(char));
+                if(available==EMPTY||available==USED)
                 {
                     delete[] content;
                     return i*4096+j;
                 }
             }
         }
-        WriteDataPageBlock(table_name,size,__zero_block);
+        WriteDataPageBlock(table_name,size,zero_block);
         delete[] content;
         return size*4096;
     }
 
-    int Buffer::SetFullDataBlock(string table_name,int block)
+    int Buffer::SetDataBlockState(string table_name,int block,char state)
     {
         char *content=new char[4096];
         int page_block=block/4096;
         int offset=block%4096;
         ReadDataPageBlock(table_name,page_block,content);
-        char set=1;
-        memcpy(content+offset*sizeof(char),&set,sizeof(char));
-        WriteDataPageBlock(table_name,page_block,content);
-        delete[] content;
-        return 1;
-    }
-
-    int Buffer::SetAvailableDataBlock(string table_name,int block)
-    {
-        char *content=new char[4096];
-        int page_block=block/4096;
-        int offset=block%4096;
-        ReadDataPageBlock(table_name,page_block,content);
-        char set=0;
-        memcpy(content+offset*sizeof(char),&set,sizeof(char));
+        memcpy(content+offset*sizeof(char),&state,sizeof(char));
         WriteDataPageBlock(table_name,page_block,content);
         delete[] content;
         return 1;

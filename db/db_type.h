@@ -50,6 +50,18 @@ enum DB_FILE_TYPE {
     DATAPAGE
 };
 
+// Data block states
+enum DB_DATA_BLOCK_STATES {
+    EMPTY,
+    USED,
+    FULL
+};
+
+enum OPTION {
+    OR,
+    AND
+};
+
 // Relations
 enum RELATION {
   LT, LTE, GT, GTE, NEQ, EQ

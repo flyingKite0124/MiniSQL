@@ -81,6 +81,7 @@ typedef struct {
   DB_DATA_TYPE type;
   size_t size;
   DB_ATTRIBUTE_TYPE attribute_type;
+  std::string index_name;
 } Attribute;
 
 // TableType

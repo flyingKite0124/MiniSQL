@@ -83,6 +83,8 @@ string LiteralToString(string s) {
   }
 }
 bool IsWord(string s) {
+  if (s.length() > 32)
+    return false;
   if (s.length() == 0 || !isalpha(s[0]))
     return false;
   for (size_t i = 0; i < s.length(); ++i)

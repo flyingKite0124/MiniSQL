@@ -27,6 +27,7 @@ enum node_types {nonleaf = 0, leaf = 1};
 typedef struct bplustree_int_node {
     node_types node_type;
     std::map<int, int> dptr;
+    int prev_ptr;
     int next_ptr;
 } BPT_IntNode;
 
@@ -41,6 +42,11 @@ typedef struct bplustree_float_node {
     std::map<float, int> dptr;
     int next_ptr;
 } BPT_FloatNode;
+
+#define INT_FLOAT_ORDER 510
+#define CHAR_STRI_ORDER 15
+#define INT_FLOAT_ALL 4080
+#define CHAR_STRI_ALL 3900
 
 class Index_Header {
 public:

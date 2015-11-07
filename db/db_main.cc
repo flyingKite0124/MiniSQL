@@ -43,7 +43,17 @@ int main(int argc, const char* argv[]) {
   attrs.push_back(attr2);
   attrs.push_back(attr3);
   db::Table indexTestTable("testTable", attrs);
-  db::CreateIndex(indexTestTable, "id");
+  std::string attrName = "id";
+
+  db::BufferDelegate.CreateTable(indexTestTable.GetName(), attrName);
+  db::CreateIndex(indexTestTable, attrName);
+  stringstream ss;
+  int value = 1;
+  std::string ww;
+  ss << value;
+  ss >> ww;
+  db::IndexPair w = std::pair<int, std::string>(12345, ww);
+  db::InsertIndex(indexTestTable, attrName, w);
 
   // TODO: GreysTone[Remove]
 

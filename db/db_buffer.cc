@@ -20,8 +20,8 @@ namespace db
             __valid[i]=0;
             __buffer[i]=new char[4096];
         }
-        __zero_block=new char[4096];
-        memset(__zero_block,0,4096);
+        zero_block=new char[4096];
+        memset(zero_block,0,4096);
     }
 
     Buffer::~Buffer()
@@ -30,7 +30,7 @@ namespace db
         {
             delete[] __buffer[i];
         }
-        delete[] __zero_block;
+        delete[] zero_block;
     }
 
     int Buffer::CreateTable(string table_name,string primary_key)
@@ -48,6 +48,8 @@ namespace db
         fclose(fopen(__GetFilename(table_name,DATA).c_str(),"wb"));
         fclose(fopen(__GetFilename(table_name,DATAPAGE).c_str(),"wb"));
         CreateIndex(table_name,primary_key);
+        WriteDataBlock(table_name,0,zero_block);
+        WriteDataPageBlock(table_name,0,zero_block);
         return 1;
     }
 
@@ -111,6 +113,8 @@ namespace db
 
     int Buffer::CreateIndex(string table_name,string index_name)
     {
+        string filename=__GetFilename(table_name,INDEX,index_name);
+        fclose(fopen(filename.c_str(),"wb"));
         char *first_block=new char[4096];
         memset(first_block,0,4096);
         int num=1;
@@ -119,38 +123,17 @@ namespace db
         memcpy(first_block+sizeof(int),&num,sizeof(int));
         num=2;
         memcpy(first_block+2*sizeof(int),&num,sizeof(int));
-        int i=__IsInBuffer(table_name,INDEX,index_name,0);
-        if(i==-1)
-        {
-            i=__FindAvailableBufferBlock(table_name);
-            __valid[i]=1;
-            __table[i]=table_name;
-            __index[i]=index_name;
-            __type[i]=INDEX;
-            __block[i]=0;
-        }
-        memcpy(__buffer[i],first_block,4096);
-        
 
-        string filename=__GetFilename(table_name,INDEX,index_name);
-        FILE* fp=fopen(filename.c_str(),"wb");
-        fseek(fp,0,SEEK_SET);
-        fwrite(__buffer[i],4096,1,fp);
-        
-        i=__IsInBuffer(table_name,INDEX,index_name,1);
-        if(i==-1)
-        {
-            i=__FindAvailableBufferBlock(table_name);
-            __valid[i]=1;
-            __table[i]=table_name;
-            __index[i]=index_name;
-            __type[i]=INDEX;
-            __block[i]=1;
-        }
-        memcpy(__buffer[i],__zero_block,4096);
-        fwrite(__buffer[i],4096,1,fp);
-        
-        fclose(fp);
+        WriteIndexBlock(table_name,index_name,0,first_block);
+        char *root_block=new char[4096];
+        memcpy(root_block,zero_block,4096);
+        char leaf=1;
+        memcpy(root_block,&leaf,sizeof(char));
+        WriteIndexBlock(table_name,index_name,1,root_block);
+
+        delete[] root_block;
+        delete[] first_block;
+
         return 1;
     }
     
@@ -163,114 +146,54 @@ namespace db
 
     int Buffer::GetRootNumber(string table_name,string index_name)
     {
-        int i=__IsInBuffer(table_name,INDEX,index_name,0);
-        if(i==-1)
-        {
-            i=__FindAvailableBufferBlock(table_name);
-            string filename=__GetFilename(table_name,INDEX,index_name);
-            FILE* fp=fopen(filename.c_str(),"rb+");
-            fseek(fp,0,SEEK_SET);
-            fread(__buffer[i],4096,1,fp);
-            __valid[i]=1;
-            __table[i]=table_name;
-            __index[i]=index_name;
-            __type[i]=INDEX;
-            __block[i]=0;
-            fclose(fp);
-        }
+        char *first_block=new char[4096];
+        ReadIndexBlock(table_name,index_name,0,first_block);
         int root;
-        memcpy(&root,__buffer[i],sizeof(int));
+        memcpy(&root,first_block,sizeof(int));
+        delete[] first_block;
         return root;
     }
 
     int Buffer::SetRootNumber(string table_name,string index_name,int block)
     {
-        string filename=__GetFilename(table_name,INDEX,index_name);
-        FILE* fp=fopen(filename.c_str(),"rb+");
-        int i=__IsInBuffer(table_name,INDEX,index_name,0);
-        if(i==-1)
-        {
-            i=__FindAvailableBufferBlock(table_name);
-            fseek(fp,0,SEEK_SET);
-            fread(__buffer[i],4096,1,fp);
-            __valid[i]=1;
-            __table[i]=table_name;
-            __index[i]=index_name;
-            __type[i]=INDEX;
-            __block[i]=0;
-        }
-        memcpy(__buffer[i],&block,sizeof(int));
-        fwrite(__buffer[i],4096,1,fp);
-        fclose(fp);
+        char *first_block=new char[4096];
+        ReadIndexBlock(table_name,index_name,0,first_block);
+        memcpy(first_block,&block,sizeof(int));
+        WriteIndexBlock(table_name,index_name,0,first_block);
+        delete[] first_block;
         return 1;
     }
 
     int Buffer::GetHeightNumber(string table_name,string index_name)
     {
-        int i=__IsInBuffer(table_name,INDEX,index_name,0);
-        if(i==-1)
-        {
-            i=__FindAvailableBufferBlock(table_name);
-            string filename=__GetFilename(table_name,INDEX,index_name);
-            FILE* fp=fopen(filename.c_str(),"rb+");
-            fseek(fp,0,SEEK_SET);
-            fread(__buffer[i],4096,1,fp);
-            __valid[i]=1;
-            __table[i]=table_name;
-            __index[i]=index_name;
-            __type[i]=INDEX;
-            __block[i]=0;
-            fclose(fp);
-        }
+        char *first_block=new char[4096];
+        ReadIndexBlock(table_name,index_name,0,first_block);
         int height;
-        memcpy(&height,__buffer[i]+sizeof(int),sizeof(int));
+        memcpy(&height,first_block+sizeof(int),sizeof(int));
+        delete[] first_block;
         return height;
     }
 
     int Buffer::SetHeightNumber(string table_name,string index_name,int height)
     {
-        string filename=__GetFilename(table_name,INDEX,index_name);
-        FILE* fp=fopen(filename.c_str(),"rb+");
-        int i=__IsInBuffer(table_name,INDEX,index_name,0);
-        if(i==-1)
-        {
-            i=__FindAvailableBufferBlock(table_name);
-            fseek(fp,0,SEEK_SET);
-            fread(__buffer[i],4096,1,fp);
-            __valid[i]=1;
-            __table[i]=table_name;
-            __index[i]=index_name;
-            __type[i]=INDEX;
-            __block[i]=0;
-        }
-        memcpy(__buffer[i]+sizeof(int),&height,sizeof(int));
-        fwrite(__buffer[i],4096,1,fp);
-        fclose(fp);
+        char *first_block=new char[4096];
+        ReadIndexBlock(table_name,index_name,0,first_block);
+        memcpy(first_block+sizeof(int),&height,sizeof(int));
+        WriteIndexBlock(table_name,index_name,0,first_block);
+        delete[] first_block;
         return 1;
     }
 
     int Buffer::GetEmptyIndexBlock(string table_name,string index_name)
     {
-        string filename=__GetFilename(table_name,INDEX,index_name);
-        FILE* fp=fopen(filename.c_str(),"rb+");
-        int i=__IsInBuffer(table_name,INDEX,index_name,0);
-        if(i==-1)
-        {
-            i=__FindAvailableBufferBlock(table_name);
-            fseek(fp,0,SEEK_SET);
-            fread(__buffer[i],4096,1,fp);
-            __valid[i]=1;
-            __table[i]=table_name;
-            __index[i]=index_name;
-            __type[i]=INDEX;
-            __block[i]=0;
-        }
+        char *first_block=new char[4096];
+        ReadIndexBlock(table_name,index_name,0,first_block);
         int empty;
-        memcpy(&empty,__buffer[i]+2*sizeof(int),sizeof(int));
+        memcpy(&empty,first_block+2*sizeof(int),sizeof(int));
         int next=empty+1;
-        memcpy(__buffer[i]+2*sizeof(int),&next,sizeof(int));
-        fwrite(__buffer[i],4096,1,fp);
-        fclose(fp);
+        memcpy(first_block+2*sizeof(int),&next,sizeof(int));
+        WriteIndexBlock(table_name,index_name,0,first_block);
+        delete[] first_block;
         return empty;
     }
 
@@ -316,34 +239,146 @@ namespace db
         return 1;
     }
 
+    int Buffer::RecreateDataFile(string table_name)
+    {
+        string filename=__GetFilename(table_name,DATA);
+        fclose(fopen(filename.c_str(),"wb"));
+        filename=__GetFilename(table_name,DATAPAGE);
+        fclose(fopen(filename.c_str(),"wb"));
+        WriteDataBlock(table_name,0,zero_block);
+        WriteDataPageBlock(table_name,0,zero_block);
+        return 1;
+    }
+
     int Buffer::ReadDataBlock(string table_name,int block,char* content)
     {
-        //TODO
-        return 0;
+        int i=__IsInBuffer(table_name,DATA,block);
+        if(i==-1)
+        {
+            i=__FindAvailableBufferBlock(table_name);
+            string filename=__GetFilename(table_name,DATA);
+            FILE* fp=fopen(filename.c_str(),"rb+");
+            fseek(fp,block*4096,SEEK_SET);
+            fread(__buffer[i],4096,1,fp);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __type[i]=DATA;
+            __block[i]=block;
+            fclose(fp);
+        }
+        memcpy(content,__buffer[i],4096);
+        return 1;
     }
 
     int Buffer::WriteDataBlock(string table_name,int block,char* content)
     {
-        //TODO
-        return 0;
+        int i=__IsInBuffer(table_name,DATA,block);
+        if(i==-1)
+        {
+            i=__FindAvailableBufferBlock(table_name);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __type[i]=DATA;
+            __block[i]=block;
+        }
+        memcpy(__buffer[i],content,4096);
+        string filename=__GetFilename(table_name,DATA);
+        FILE* fp=fopen(filename.c_str(),"rb+");
+        fseek(fp,block*4096,SEEK_SET);
+        fwrite(__buffer[i],4096,1,fp);
+        fclose(fp);
+        return 1;
+    }
+
+    int Buffer::ReadDataPageBlock(string table_name,int block,char* content)
+    {
+        int i=__IsInBuffer(table_name,DATAPAGE,block);
+        if(i==-1)
+        {
+            i=__FindAvailableBufferBlock(table_name);
+            string filename=__GetFilename(table_name,DATAPAGE);
+            FILE* fp=fopen(filename.c_str(),"rb+");
+            fseek(fp,block*4096,SEEK_SET);
+            fread(__buffer[i],4096,1,fp);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __type[i]=DATAPAGE;
+            __block[i]=block;
+            fclose(fp);
+        }
+        memcpy(content,__buffer[i],4096);
+        return 1;
+    }
+
+    int Buffer::WriteDataPageBlock(string table_name,int block,char* content)
+    {
+        int i=__IsInBuffer(table_name,DATAPAGE,block);
+        if(i==-1)
+        {
+            i=__FindAvailableBufferBlock(table_name);
+            __valid[i]=1;
+            __table[i]=table_name;
+            __type[i]=DATAPAGE;
+            __block[i]=block;
+        }
+        memcpy(__buffer[i],content,4096);
+        string filename=__GetFilename(table_name,DATAPAGE);
+        FILE* fp=fopen(filename.c_str(),"rb+");
+        fseek(fp,block*4096,SEEK_SET);
+        fwrite(__buffer[i],4096,1,fp);
+        fclose(fp);
+        return 1;
     }
 
     int Buffer::GetAvailableDataBlock(string table_name)
     {
-        //TODO
-        return 0;
+        char available;
+        char *content=new char[4096];
+        int size=GetDataPageFileSize(table_name);
+        for(int i=0;i<size;i++)
+        {
+            ReadDataPageBlock(table_name,i,content);
+            for(int j=0;j<4096;j++)
+            {
+                memcpy(&available,content+j*sizeof(char),sizeof(char));
+                if(available==EMPTY||available==USED)
+                {
+                    delete[] content;
+                    return i*4096+j;
+                }
+            }
+        }
+        WriteDataPageBlock(table_name,size,zero_block);
+        delete[] content;
+        return size*4096;
     }
 
-    int Buffer::SetFullDataBlock(string table_name,int block)
+    int Buffer::SetDataBlockState(string table_name,int block,char state)
     {
-        //TODO
-        return 0;
+        char *content=new char[4096];
+        int page_block=block/4096;
+        int offset=block%4096;
+        ReadDataPageBlock(table_name,page_block,content);
+        memcpy(content+offset*sizeof(char),&state,sizeof(char));
+        WriteDataPageBlock(table_name,page_block,content);
+        delete[] content;
+        return 1;
     }
 
-    int Buffer::SetAvailableDataBlock(string table_name,int block)
+    int Buffer::GetDataFileSize(string table_name)
     {
-        //TODO
-        return 0;
+        string filename=__GetFilename(table_name,DATA);
+        struct stat statbuff;
+        stat(filename.c_str(),&statbuff);
+        return statbuff.st_size/4096;
+    }
+
+    int Buffer::GetDataPageFileSize(string table_name)
+    {
+        string filename=__GetFilename(table_name,DATAPAGE);
+        struct stat statbuff;
+        stat(filename.c_str(),&statbuff);
+        return statbuff.st_size/4096;
     }
 
     int Buffer::__IsInBuffer(string table_name,int type,string index_name,int block)

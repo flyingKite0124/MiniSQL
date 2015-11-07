@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 #include <iostream>
 #include <algorithm>
 using namespace std;
@@ -27,6 +28,11 @@ inline RELATION StringToRelation(string s) {
   if (s == ">=") return GTE;
   if (s == "<=") return LTE;
   throw invalid_argument("`" + s + "` is not a valid comparer.");
+}
+
+inline int GetOutputSize(Attribute attr) {
+  return max(attr.name.length() + 4,
+             attr.type == TYPE_CHAR ? attr.size + 4 : 12);
 }
 
 Filter::Filter(string s) {
@@ -181,6 +187,7 @@ CreateTableOperation::CreateTableOperation(string command) {
 int CreateTableOperation::Execute() {
   // DONE.
   Catalog::CreateTable(table);
+  cout << "Create table `" << table.GetName() << "` successfully." << endl;
   return 0;
   // throw runtime_error("Operation `create table` is not implemented.");
 }
@@ -208,6 +215,7 @@ DropTableOperation::DropTableOperation(string command) {
 int DropTableOperation::Execute() {
   // DONE.
   Catalog::DropTable(table_name);
+  cout << "Drop table `" << table_name << "` successfully." << endl;
   return 0;
 }
 
@@ -315,6 +323,7 @@ int InsertIntoOperation::Execute() {
     throw runtime_error("Table `" + table_name + "` is not found.");
   InsertRecord(table, make_pair(-1, values));
   // TODO: Insert Index
+  cout << "Insert 1 record successfully." << endl;
   return 0;
 }
 
@@ -364,22 +373,23 @@ int SelectFromOperation::Execute() {
   // TODO: With index
   // Without index
   TupleList tuples = SelectRecordLinear(table, filters);
-  int columns = table.GetAttributes().size();
+  auto attributes = table.GetAttributes();
+  int columns = attributes.size();
   counter = 0;
-  for (auto& attr: table.GetAttributes()) {
-    ++counter;
-    cout << attr.name << " \t"[counter != columns];
+  for (auto& attr: attributes) {
+    DEBUG << attr.name << " " << GetOutputSize(attr) << endl;
+    cout << setw(GetOutputSize(attr)) << attr.name;
   }
   cout << endl;
   for (auto& tuple: tuples) {
     counter = 0;
     for (auto& value: tuple.second) {
+      cout << setw(GetOutputSize(attributes[counter])) << value;
       ++counter;
-      cout << value << " \t"[counter != columns];
     }
     cout << endl;
   }
-  cout << "Query OK!" << endl;
+  cout << "Query OK! " << tuples.size() << " records found." << endl;
   return 0;
 }
 

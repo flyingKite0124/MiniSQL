@@ -50,4 +50,4 @@ db: io.o string.o command_line.o db_type.o db_buffer.o db_catalog.o db_index.o d
 	$(CPP) $(CPPFLAGS) base/io.o base/string.o base/command_line.o db/db_type.o \
 	db/db_buffer.o db/db_catalog.o db/db_index.o db/db_global.o db/db_main.o db/db_help.o db/db_repl.o \
 	db/db_process.o db/db_record.o \
-	-o minisql -lreadline
+	-o minisql -g -lreadline

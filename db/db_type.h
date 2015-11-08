@@ -95,6 +95,8 @@ public:
   std::string GetName();
   std::vector<Attribute> GetAttributes();
   Attribute GetPrimaryKey();
+  void Indexify(std::string attr_name, std::string index_name);
+  void Unindexify(std::string index_name);
 };
 
 // Filter & FilterList

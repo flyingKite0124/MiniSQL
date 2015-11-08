@@ -10,6 +10,8 @@ namespace Catalog {
 
 void CreateTable(Table table);
 
+void SaveTable(Table& table);
+
 bool GetTable(std::string table_name, Table& table);
 
 void DropTable(std::string table_name);

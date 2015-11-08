@@ -13,6 +13,7 @@ using namespace std;
 #include "db/db_main.h"
 #include "db/db_catalog.h"
 #include "db/db_record.h"
+#include "db/db_index.h"
 #include "db/db_repl.h"
 #include "base/string.h"
 
@@ -70,6 +71,46 @@ Attribute Table::GetPrimaryKey() {
       return attr;
   }
   assert(false);
+}
+
+void Table::Indexify(string attr_name, string index_name) {
+  for (auto& attr: attr_list)
+    if (attr.index_name == index_name)
+      throw runtime_error("Index `" + index_name + "` exists already.");
+  for (auto& attr: attr_list) {
+    if (attr.name == attr_name) {
+      if (attr.index_name != "")
+        throw runtime_error("An index has been created on attribute `" +
+                            attr_name + "` of table `" + table_name + "`");
+      if (attr.attribute_type == TYPE_NONE)
+        throw runtime_error("An index must be created on unique attribute.");
+      attr.index_name = index_name;
+      if (attr.type == TYPE_INT)
+        CreateIntIndex(*this, attr_name);
+      else if (attr.type == TYPE_FLOAT)
+        CreateFloatIndex(*this, attr_name);
+      else if (attr.type == TYPE_CHAR)
+        CreateCharIndex(*this, attr_name);
+      if (attr.attribute_type == TYPE_UNIQUE)
+        attr.attribute_type = TYPE_INDEXED;
+      break;
+    }
+  }
+  Catalog::SaveTable(*this);
+}
+
+void Table::Unindexify(string index_name) {
+  bool index_found = false;
+  for (auto& attr: attr_list) {
+    if (attr.index_name == index_name) {
+      index_found = true;
+      DropIndex(*this, attr.name);
+      attr.attribute_type = TYPE_UNIQUE;
+      Catalog::SaveTable(*this);
+    }
+  }
+  if (!index_found)
+    throw runtime_error("Index `" + index_name + "` is not found.");
 }
 
 // Create Table class
@@ -192,10 +233,16 @@ CreateTableOperation::CreateTableOperation(string command) {
 }
 int CreateTableOperation::Execute() {
   // DONE.
+  // Create table
   Catalog::CreateTable(table);
+  // Create primary key index
+  auto primary_key = table.GetPrimaryKey();
+  string index_name = "_pkidx_" + table.GetName();
+  if (index_name.length() > 32)
+    index_name = index_name.substr(0, 32);
+  table.Indexify(primary_key.name, index_name);
   cout << "Create table `" << table.GetName() << "` successfully." << endl;
   return 0;
-  // throw runtime_error("Operation `create table` is not implemented.");
 }
 
 // Drop Table class
@@ -220,6 +267,11 @@ DropTableOperation::DropTableOperation(string command) {
 }
 int DropTableOperation::Execute() {
   // DONE.
+  // Drop primary key index
+  Table table;
+  Catalog::GetTable(table_name, table);
+  DropIndex(table, table.GetPrimaryKey().name);
+  // Drop table
   Catalog::DropTable(table_name);
   cout << "Drop table `" << table_name << "` successfully." << endl;
   return 0;
@@ -267,7 +319,10 @@ int CreateIndexOperation::Execute() {
   if (!found_attr)
     throw runtime_error("Attribute `" + attr_name + "` is not found on `" +
                         table_name + "`.");
-  throw runtime_error("Operation `create index` is not implemented.");
+  table.Indexify(attr_name, index_name);
+  // XXX: HOTFIX
+  ofstream fout("data/" + index_name + ".idxmap");
+  fout << table_name << endl;
   return 0;
 }
 
@@ -292,7 +347,16 @@ DropIndexOperation::DropIndexOperation(string command) {
   DEBUG << "==========================================================" << endl;
 }
 int DropIndexOperation::Execute() {
-  throw runtime_error("Operation `drop index` is not implemented.");
+  // XXX: HOTFIX
+  string table_name;
+  ifstream fin("data/" + index_name + ".idxmap");
+  if (!fin.is_open())
+    throw runtime_error("Index `" + index_name + "` is not found.");
+  fin >> table_name;
+  Table table;
+  if (!Catalog::GetTable(table_name, table))
+    throw runtime_error("Table `" + table_name + "` is not found.");
+  table.Unindexify(index_name);
   return 0;
 }
 
@@ -345,7 +409,7 @@ int InsertIntoOperation::Execute() {
   }
   InsertRecord(table, make_pair(-1, values));
   // TODO: Insert Index
-  cout << "Insert 1 record successfully." << endl;
+  // cout << "Insert 1 record successfully." << endl;
   return 0;
 }
 

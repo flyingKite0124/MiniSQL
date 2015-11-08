@@ -74,6 +74,12 @@ void CreateTable(Table table) {
   BufferDelegate.WriteCatalogBlock(table.GetName(), chunk);
 }
 
+void SaveTable(Table& table) {
+  char chunk[4096];
+  StringifyTable(table, chunk);
+  BufferDelegate.WriteCatalogBlock(table.GetName(), chunk);
+}
+
 bool GetTable(string table_name, Table& table) {
   if (BufferDelegate.CheckTable(table_name) == 0)
     return false;

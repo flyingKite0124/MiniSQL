@@ -323,11 +323,16 @@ int CreateIndexOperation::Execute() {
   if (!Catalog::GetTable(table_name, table))
     throw runtime_error("Table `" + table_name + "` is not found.");
   bool found_attr = false;
-  for (auto& attr: table.GetAttributes())
+  Attribute target;
+  int count = 0;
+  for (auto& attr: table.GetAttributes()) {
     if (attr.name == attr_name) {
       found_attr = true;
+      target = attr;
       break;
     }
+    ++count;
+  }
   if (!found_attr)
     throw runtime_error("Attribute `" + attr_name + "` is not found on `" +
                         table_name + "`.");
@@ -336,6 +341,16 @@ int CreateIndexOperation::Execute() {
   // XXX: HOTFIX
   ofstream fout("data/" + index_name + ".idxmap");
   fout << table_name << endl;
+  FilterList filters;
+  TupleList tuples = SelectRecordLinear(table, filters);
+  for (auto& tuple: tuples) {
+    if (target.type == TYPE_INT)
+      InsertIntIndex(table, target.name, make_pair(tuple.first, tuple.second[count]));
+    else if (target.type == TYPE_FLOAT)
+      InsertFloatIndex(table, target.name, make_pair(tuple.first, tuple.second[count]));
+    else if (target.type == TYPE_CHAR)
+      InsertFloatIndex(table, target.name, make_pair(tuple.first, tuple.second[count]));
+  }
 #else
   throw runtime_error("With mode NOINDEX, this is not allowed.");
 #endif

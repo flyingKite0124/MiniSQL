@@ -43,7 +43,7 @@ int CreateCharIndex(Table table, std::string attr_name) {
     // Reset Root Nodes
     BPT_CHAR R;
     R.isLeaf = true;
-    memset(R.key, 0, sizeof(R.key));
+//    memset(R.key, 0, sizeof(R.key));
     memset(R.pointer, 0, sizeof(R.pointer));
     R.countKey = 0;
     _IndexWriteBlock(index, &R, index.rootAddr);

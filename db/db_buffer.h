@@ -42,12 +42,12 @@ namespace db
 
             char *zero_block;
         private:
-            char *__buffer[100];
-            std::string __table[100];
-            std::string __index[100];
-            int __type[100];
-            int __block[100];
-            int __valid[100];
+            char *__buffer[100000];
+            std::string __table[100000];
+            std::string __index[100000];
+            int __type[100000];
+            int __block[100000];
+            int __valid[100000];
             int __pointer;
             int __IsInBuffer(std::string table_name,int type,std::string index_name,int block);
             int __IsInBuffer(std::string table_name,int type,int block);

@@ -15,7 +15,7 @@ namespace db
     Buffer::Buffer()
     {
         __pointer=0;
-        for(int i=0;i<100;i++)
+        for(int i=0;i<100000;i++)
         {
             __valid[i]=0;
             __buffer[i]=new char[4096];
@@ -26,7 +26,7 @@ namespace db
 
     Buffer::~Buffer()
     {
-        for(int i=0;i<100;i++)
+        for(int i=0;i<100000;i++)
         {
             delete[] __buffer[i];
         }
@@ -396,7 +396,7 @@ namespace db
     {
         if(type==INDEX)
         {
-            for(int i=0;i<100;i++)
+            for(int i=0;i<100000;i++)
             {
                 if(__valid[i]==1&&__type[i]==type&&__table[i]==table_name&&__index[i]==index_name&&__block[i]==block)
                 {
@@ -412,7 +412,7 @@ namespace db
     {
         if(type==DATA||type==DATAPAGE)
         {
-            for(int i=0;i<100;i++)
+            for(int i=0;i<100000;i++)
             {
                 if(__valid[i]==1&&__type[i]==type&&__table[i]==table_name&&__block[i]==block)
                 {
@@ -428,7 +428,7 @@ namespace db
     {
         if(type==CATALOG)
         {
-            for(int i=0;i<100;i++)
+            for(int i=0;i<100000;i++)
             {
                 if(__valid[i]==1&&__type[i]==type&&__table[i]==table_name)
                 {
@@ -442,13 +442,13 @@ namespace db
 
     int Buffer::__FindAvailableBufferBlock(string table_name)
     {
-        for(int i=0;i<100;i++)
+        for(int i=0;i<100000;i++)
         {
             if(__valid[i]==0||__table[i]!=table_name)
                 return i;
         }
         int old=__pointer;
-        __pointer=(__pointer+1)%100;
+        __pointer=(__pointer+1)%1000;
         return old;
     }
 

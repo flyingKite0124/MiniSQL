@@ -480,7 +480,7 @@ IndexPair _Index_SelectBoarderIntNode(Table table, std::string attr_name, Filter
         if(i < a.countKey && a.isLeaf && pairKey == a.key[i] && a.pointer[i] > 0) {
             result = std::pair<int, std::string>(a.pointer[i], __IntToString(a.key[i]));
 //            cout << a.key[i] << "-" << a.pointer[i] << endl;
-            return result;q
+            return result;
         }
         current = a.pointer[i] ;
 

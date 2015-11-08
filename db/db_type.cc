@@ -111,6 +111,7 @@ void Table::Unindexify(string index_name) {
       index_found = true;
       DropIndex(*this, attr.name);
       attr.attribute_type = TYPE_UNIQUE;
+      attr.index_name = "";
       Catalog::SaveTable(*this);
     }
   }
@@ -322,11 +323,16 @@ int CreateIndexOperation::Execute() {
   if (!Catalog::GetTable(table_name, table))
     throw runtime_error("Table `" + table_name + "` is not found.");
   bool found_attr = false;
-  for (auto& attr: table.GetAttributes())
+  Attribute target;
+  int count = 0;
+  for (auto& attr: table.GetAttributes()) {
     if (attr.name == attr_name) {
       found_attr = true;
+      target = attr;
       break;
     }
+    ++count;
+  }
   if (!found_attr)
     throw runtime_error("Attribute `" + attr_name + "` is not found on `" +
                         table_name + "`.");
@@ -335,6 +341,16 @@ int CreateIndexOperation::Execute() {
   // XXX: HOTFIX
   ofstream fout("data/" + index_name + ".idxmap");
   fout << table_name << endl;
+  FilterList filters;
+  TupleList tuples = SelectRecordLinear(table, filters);
+  for (auto& tuple: tuples) {
+    if (target.type == TYPE_INT)
+      InsertIntIndex(table, target.name, make_pair(tuple.first, tuple.second[count]));
+    else if (target.type == TYPE_FLOAT)
+      InsertFloatIndex(table, target.name, make_pair(tuple.first, tuple.second[count]));
+    else if (target.type == TYPE_CHAR)
+      InsertFloatIndex(table, target.name, make_pair(tuple.first, tuple.second[count]));
+  }
 #else
   throw runtime_error("With mode NOINDEX, this is not allowed.");
 #endif
@@ -414,9 +430,11 @@ int InsertIntoOperation::Execute() {
   // Value size
   if (values.size() != attributes.size())
     throw runtime_error("The size of values provided is not matched to table.");
+  int count;
+#ifndef NOPRIMARYINDEX
   // Unique test
   FilterList filters;
-  int count = 0;
+  count = 0;
   for (auto& attribute: attributes) {
 #ifndef NOINDEX
     // Not TYPE_NONE
@@ -447,6 +465,7 @@ int InsertIntoOperation::Execute() {
   if (SelectRecordLinearOr(table, filters).size() > 0) {
     throw runtime_error("Unique constraints are not fulfilled.");
   }
+#endif
   int block_id = InsertRecord(table, make_pair(-1, values));
 #ifndef NOINDEX
   count = 0;

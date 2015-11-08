@@ -402,9 +402,24 @@ int InsertIntoOperation::Execute() {
   int count = 0;
   for (auto& attribute: attributes) {
     // Not TYPE_NONE
-    if (attribute.attribute_type) {
-      filters.push_back(Filter(attribute.name + " = " + values[count++]));
+    if (attribute.attribute_type == TYPE_UNIQUE) {
+      filters.push_back(Filter(attribute.name + " = " + values[count]));
+    } else if (attribute.attribute_type == TYPE_INDEXED ||
+               attribute.attribute_type == TYPE_PRIMARY_KEY) {
+      // With index
+      Filter filter(attribute.name + " = " + values[count]);
+      IndexPairList res;
+      if (attribute.type == TYPE_INT)
+        res = _Index_SelectIntNode(table, attibute.name, filter);
+      else if (attribute.type == TYPE_FLOAT)
+        res = _Index_SelectFloatNode(table, attibute.name, filter);
+      else if (attribute.type == TYPE_CHAR)
+        res = _Index_SelectCharNode(table, attribute.name, filter);
+      if (res.size() > 0) {
+        throw runtime_error("Unique constraints are not fulfilled.");
+      }
     }
+    count += 1;
   }
   if (SelectRecordLinearOr(table, filters).size() > 0) {
     throw runtime_error("Unique constraints are not fulfilled.");

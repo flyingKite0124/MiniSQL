@@ -410,9 +410,9 @@ int InsertIntoOperation::Execute() {
       Filter filter(attribute.name + " = " + values[count]);
       IndexPairList res;
       if (attribute.type == TYPE_INT)
-        res = _Index_SelectIntNode(table, attibute.name, filter);
+        res = _Index_SelectIntNode(table, attribute.name, filter);
       else if (attribute.type == TYPE_FLOAT)
-        res = _Index_SelectFloatNode(table, attibute.name, filter);
+        res = _Index_SelectFloatNode(table, attribute.name, filter);
       else if (attribute.type == TYPE_CHAR)
         res = _Index_SelectCharNode(table, attribute.name, filter);
       if (res.size() > 0) {

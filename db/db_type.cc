@@ -433,10 +433,6 @@ int InsertIntoOperation::Execute() {
         res = _Index_SelectFloatNode(table, attribute.name, filter);
       else if (attribute.type == TYPE_CHAR)
         res = _Index_SelectCharNode(table, attribute.name, filter);
-      cout << "Found " << res.size() << " tuples." << endl;
-      for (auto& ip: res) {
-        cout << "Block id: " << ip.first << ". Content: " << ip.second << endl;
-      }
       if (res.size() > 0) {
         throw runtime_error("Unique constraints are not fulfilled.");
       }
@@ -468,7 +464,7 @@ int InsertIntoOperation::Execute() {
     ++count;
   }
 #endif
-#ifndef NOINSERTLOG
+#ifdef INSERTLOG
   cout << "Insert 1 record successfully." << endl;
 #endif
   return 0;

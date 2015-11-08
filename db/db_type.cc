@@ -111,6 +111,7 @@ void Table::Unindexify(string index_name) {
       index_found = true;
       DropIndex(*this, attr.name);
       attr.attribute_type = TYPE_UNIQUE;
+      attr.index_name = "";
       Catalog::SaveTable(*this);
     }
   }
@@ -414,9 +415,11 @@ int InsertIntoOperation::Execute() {
   // Value size
   if (values.size() != attributes.size())
     throw runtime_error("The size of values provided is not matched to table.");
+  int count;
+#ifndef NOPRIMARYINDEX
   // Unique test
   FilterList filters;
-  int count = 0;
+  count = 0;
   for (auto& attribute: attributes) {
 #ifndef NOINDEX
     // Not TYPE_NONE
@@ -447,6 +450,7 @@ int InsertIntoOperation::Execute() {
   if (SelectRecordLinearOr(table, filters).size() > 0) {
     throw runtime_error("Unique constraints are not fulfilled.");
   }
+#endif
   int block_id = InsertRecord(table, make_pair(-1, values));
 #ifndef NOINDEX
   count = 0;

@@ -245,8 +245,10 @@ int CreateTableOperation::Execute() {
   string index_name = "_pkidx_" + table.GetName();
   if (index_name.length() > 32)
     index_name = index_name.substr(0, 32);
+#ifndef NOPRIMARYINDEX
 #ifndef NOINDEX
   table.Indexify(primary_key.name, index_name);
+#endif
 #endif
   cout << "Create table `" << table.GetName() << "` successfully." << endl;
   return 0;

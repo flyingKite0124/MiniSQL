@@ -26,6 +26,7 @@ Index_Header::~Index_Header() {
 
 int CreateIntIndex(Table table, std::string attr_name) {
     Index_Header index(table, attr_name);
+    BufferDelegate.CreateIndex(index.tableName, attr_name);
 
     // Reset Root Nodes
     BPT_INT R;
@@ -39,12 +40,12 @@ int CreateIntIndex(Table table, std::string attr_name) {
 }
 int CreateCharIndex(Table table, std::string attr_name) {
     Index_Header index(table, attr_name);
+    BufferDelegate.CreateIndex(index.tableName, attr_name);
 
     // Reset Root Nodes
     BPT_CHAR R;
     R.isLeaf = true;
-    for(int i=0; i<CHAR_STRI_ORDER; i++)
-        R.key[i] = "";
+    memset(R.key, 0, sizeof(R.key));
     memset(R.pointer, 0, sizeof(R.pointer));
     R.countKey = 0;
     _IndexWriteBlock(index, &R, index.rootAddr);
@@ -53,6 +54,7 @@ int CreateCharIndex(Table table, std::string attr_name) {
 }
 int CreateFloatIndex(Table table, std::string attr_name) {
     Index_Header index(table, attr_name);
+    BufferDelegate.CreateIndex(index.tableName, attr_name);
 
     // Reset Root Nodes
     BPT_FLOAT R;
@@ -170,9 +172,10 @@ void _Index_SplitNode(Index_Header idx, BPT_CHAR &father, BPT_CHAR &current, con
     // Split Full BPlus TreeNode
     int half = CHAR_STRI_ORDER/2 ;
 
-    int i ;
+    int i;
     for(i=father.countKey; i>childnum; i--) {
-        father.key[i] = father.key[i-1] ;
+//        father.key[i] = father.key[i-1] ;
+        strcpy(father.key[i], father.key[i-1]);
         father.pointer[i+1] = father.pointer[i];
     }
     father.countKey++;
@@ -181,12 +184,14 @@ void _Index_SplitNode(Index_Header idx, BPT_CHAR &father, BPT_CHAR &current, con
 
     int address = BufferDelegate.GetEmptyIndexBlock(idx.tableName, idx.attrName);
 
-    father.key[childnum] = current.key[half] ;
+    //father.key[childnum] = current.key[half] ;
+    strcpy(father.key[childnum], current.key[half]);
     father.pointer[childnum+1] = address;
 
     for( i = half+1; i < CHAR_STRI_ORDER; i++ )
     {
-        t.key[i-half-1] = current.key[i] ;
+        //t.key[i-half-1] = current.key[i] ;
+        strcpy(t.key[i-half-1], current.key[i]);
         t.pointer[i-half-1] = current.pointer[i];
     }
 
@@ -297,7 +302,7 @@ void _Insert_IndexforChar(Index_Header idx, int current, IndexPair pair) {
 
     int	i;
     std::string pairKey = pair.second;
-    for(i=0 ; i<node.countKey && node.key[i]<pairKey; i++);
+    for(i=0 ; i<node.countKey && strcmp(node.key[i],pairKey.c_str())<0; i++);
 
     if(i<node.countKey && node.isLeaf && node.key[i]==pairKey) {
         if(node.pointer[i] == -1) node.pointer[i] = pair.first;
@@ -323,10 +328,12 @@ void _Insert_IndexforChar(Index_Header idx, int current, IndexPair pair) {
     }
     else {
         for(int j = node.countKey ; j > i ; j--) {
-            node.key[j] = node.key[j-1] ;
+            //node.key[j] = node.key[j-1] ;
+            strcpy(node.key[j], node.key[j-1]);
             node.pointer[j] = node.pointer[j-1] ;
         }
-        node.key[i] = pairKey ;
+        //node.key[i] = pairKey.c_str();
+        strcpy(node.key[i], pairKey.c_str());
         node.countKey++;
         node.pointer[i] = pair.first;
 
@@ -477,10 +484,11 @@ IndexPair _Index_SelectBoarderCharNode(Table table, std::string attr_name, Filte
     {
         _IndexReadBlock(index, &a, current);
         std::string pairKey = filter.value;
-        for(i = 0; i < a.countKey && pairKey > a.key[i]; i++);
+        for(i = 0; i < a.countKey && strcmp(pairKey.c_str(), a.key[i]) > 0; i++);
 
-        if(i < a.countKey && a.isLeaf && pairKey == a.key[i] && a.pointer[i] > 0) {
-            result = std::pair<int, std::string>(a.pointer[i], a.key[i]);
+        if(i < a.countKey && a.isLeaf && strcmp(pairKey.c_str(), a.key[i])==0 && a.pointer[i] > 0) {
+            string tmpStr(a.key[i]);
+            result = std::pair<int, std::string>(a.pointer[i], tmpStr);
 //            cout << a.key[i] << "-" << a.pointer[i] << endl;
             return result;
         }
@@ -514,11 +522,12 @@ IndexPair _Index_SelectBoarderFloatNode(Table table, std::string attr_name, Filt
 IndexPairList _Index_SelectIntNode(Table table, std::string attr_name, Filter filter) {
     Index_Header index(table, attr_name);
     IndexPairList result;
+//    cout << "DEBUG[SELECT]" <<  __StringToInt(filter.value) << endl;
 
     switch (filter.op) {
         case EQ: {
             IndexPair limit = _Index_SelectBoarderIntNode(table, attr_name, filter);
-            result.push_back(limit);
+            if(limit.first) result.push_back(limit);
         } break;
         case NEQ: {
             BPT_INT head;
@@ -641,7 +650,7 @@ IndexPairList _Index_SelectCharNode(Table table, std::string attr_name, Filter f
     switch (filter.op) {
         case EQ: {
             IndexPair limit = _Index_SelectBoarderCharNode(table, attr_name, filter);
-            result.push_back(limit);
+            if(limit.first) result.push_back(limit);
         } break;
         case NEQ: {
             BPT_CHAR head;
@@ -654,7 +663,8 @@ IndexPairList _Index_SelectCharNode(Table table, std::string attr_name, Filter f
 
             while(1) {
                 for(int i = 0; i < head.countKey; i++) {
-                    IndexPair line = std::pair<int, std::string>(head.pointer[i], head.key[i]);
+                    string tmpStr(head.key[i]);
+                    IndexPair line = std::pair<int, std::string>(head.pointer[i], tmpStr);
                     if(line.second == limit.second) continue;
                     else result.push_back(line);
                 }
@@ -676,7 +686,8 @@ IndexPairList _Index_SelectCharNode(Table table, std::string attr_name, Filter f
 
             while(1) {
                 for(int i = 0; i < head.countKey; i++) {
-                    IndexPair line = std::pair<int, std::string>(head.pointer[i], head.key[i]);
+                    string tmpStr(head.key[i]);
+                    IndexPair line = std::pair<int, std::string>(head.pointer[i], tmpStr);
                     if(line.second < limit.second) result.push_back(line);
                     else break;
                 }
@@ -698,7 +709,8 @@ IndexPairList _Index_SelectCharNode(Table table, std::string attr_name, Filter f
 
             while(1) {
                 for(int i = 0; i < head.countKey; i++) {
-                    IndexPair line = std::pair<int, std::string>(head.pointer[i], head.key[i]);
+                    string tmpStr(head.key[i]);
+                    IndexPair line = std::pair<int, std::string>(head.pointer[i], tmpStr);
                     if(line.second < limit.second) continue;
                     else result.push_back(line);
                 }
@@ -720,7 +732,8 @@ IndexPairList _Index_SelectCharNode(Table table, std::string attr_name, Filter f
 
             while(1) {
                 for(int i = 0; i < head.countKey; i++) {
-                    IndexPair line = std::pair<int, std::string>(head.pointer[i], head.key[i]);
+                    string tmpStr(head.key[i]);
+                    IndexPair line = std::pair<int, std::string>(head.pointer[i], tmpStr);
                     if(line.second <= limit.second) result.push_back(line);
                     else break;
                 }
@@ -742,7 +755,8 @@ IndexPairList _Index_SelectCharNode(Table table, std::string attr_name, Filter f
 
             while(1) {
                 for(int i = 0; i < head.countKey; i++) {
-                    IndexPair line = std::pair<int, std::string>(head.pointer[i], head.key[i]);
+                    string tmpStr(head.key[i]);
+                    IndexPair line = std::pair<int, std::string>(head.pointer[i], tmpStr);
                     if(line.second <= limit.second) continue;
                     else result.push_back(line);
                 }
@@ -764,7 +778,7 @@ IndexPairList _Index_SelectFloatNode(Table table, std::string attr_name, Filter 
     switch (filter.op) {
         case EQ: {
             IndexPair limit = _Index_SelectBoarderFloatNode(table, attr_name, filter);
-            result.push_back(limit);
+            if(limit.first) result.push_back(limit);
         } break;
         case NEQ: {
             BPT_FLOAT head;

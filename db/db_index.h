@@ -47,7 +47,8 @@ typedef struct bpt_int_node {
 
 typedef struct bpt_char_node {
     bool isLeaf;
-    std::string key[CHAR_STRI_ORDER];
+//    std::string key[CHAR_STRI_ORDER];
+    char key[CHAR_STRI_ORDER][256];
     int pointer[CHAR_STRI_ORDER+1];
     int countKey;
 } BPT_CHAR;

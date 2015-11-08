@@ -105,6 +105,7 @@ public:
   std::string key;
   RELATION op;
   std::string value;
+  Filter();
   Filter(std::string s);
 };
 typedef std::vector<Filter> FilterList;

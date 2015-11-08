@@ -48,7 +48,11 @@ namespace db
         fclose(fopen(__GetFilename(table_name,DATA).c_str(),"wb"));
         fclose(fopen(__GetFilename(table_name,DATAPAGE).c_str(),"wb"));
         CreateIndex(table_name,primary_key);
-        WriteDataPageBlock(table_name,0,zero_block);
+        char *first_block=new char[4096];
+        memset(first_block,0,4096);
+        memset(first_block,2,1);
+        WriteDataPageBlock(table_name,0,first_block);
+        delete[] first_block;
         return 1;
     }
 
@@ -244,7 +248,11 @@ namespace db
         fclose(fopen(filename.c_str(),"wb"));
         filename=__GetFilename(table_name,DATAPAGE);
         fclose(fopen(filename.c_str(),"wb"));
-        WriteDataPageBlock(table_name,0,zero_block);
+        char *first_block=new char[4096];
+        memset(first_block,0,4096);
+        memset(first_block,2,1);
+        WriteDataPageBlock(table_name,0,first_block);
+        delete[] first_block;
         return 1;
     }
 

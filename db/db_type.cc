@@ -613,12 +613,50 @@ int DeleteFromOperation::Execute() {
     throw runtime_error("Table `" + table_name + "` is not found.");
   if (filters.size() == 0) {
     DeleteRecordAll(table);
-    // TODO: Index
+#ifndef NOINDEX
+    for (auto& attr: table.GetAttributes()) {
+      if (attr.attribute_type >= TYPE_INDEXED) {
+        if (attr.type == TYPE_INT)
+          RecreateIntIndex(table, attr.name);
+        else if (attr.type == TYPE_FLOAT)
+          RecreateFloatIndex(table, attr.name);
+        else
+          RecreateCharIndex(table, attr.name);
+      }
+    }
+#endif
     return 0;
   }
-  // TODO: With index
-  // Without index
-  TupleList tuples = DeleteRecordLinear(table, filters[0]);
+  Filter filter = filters[0];
+  TupleList tuples;
+  bool deleted = false;
+#ifndef NOINDEX
+  if (filter.op != NEQ) {
+    for (auto& attr: table.GetAttributes()) {
+      if (attr.name != filter.key) continue;
+      if (attr.attribute_type >= TYPE_INDEXED) {
+        IndexPairList ipl;
+        if (attr.type == TYPE_INT)
+          ipl = _Index_SelectIntNode(table, attr.name, filter);
+        else if (attr.type == TYPE_FLOAT)
+          ipl = _Index_SelectFloatNode(table, attr.name, filter);
+        else if (attr.type == TYPE_CHAR)
+          ipl = _Index_SelectCharNode(table, attr.name, filter);
+        tuples = DeleteRecordByList(table, attr.name, ipl);
+        deleted = true;
+        break;
+      }
+    }
+  }
+#endif
+  if (!deleted) {
+    tuples = DeleteRecordLinear(table, filter);
+#ifndef NOINDEX
+    for (auto& tuple: tuples) {
+      // TODO: Remove index
+    }
+#endif
+  }
   cout << "Delete OK! " << tuples.size() << " records deleted." << endl;
   return 0;
 }

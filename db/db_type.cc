@@ -652,9 +652,22 @@ int DeleteFromOperation::Execute() {
   if (!deleted) {
     tuples = DeleteRecordLinear(table, filter);
 #ifndef NOINDEX
-    for (auto& tuple: tuples) {
-      // TODO: Remove index
+  int counter = 0;
+  for (auto& attr: table.GetAttributes()) {
+    if (attr.attribute_type >= TYPE_INDEXED) {
+      if (attr.type == TYPE_INT) {
+        for (auto& tuple: tuples)
+          DeleteIntIndex(table, attr.name, make_pair(tuple.first, tuple.second[counter]));
+      } else if (attr.type == TYPE_FLOAT) {
+        for (auto& tuple: tuples)
+          DeleteFloatIndex(table, attr.name, make_pair(tuple.first, tuple.second[counter]));
+      } else if (attr.type == TYPE_CHAR) {
+        for (auto& tuple: tuples)
+          DeleteCharIndex(table, attr.name, make_pair(tuple.first, tuple.second[counter]));
+      }
     }
+    ++counter;
+  }
 #endif
   }
   cout << "Delete OK! " << tuples.size() << " records deleted." << endl;

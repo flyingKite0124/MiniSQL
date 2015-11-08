@@ -415,17 +415,34 @@ int InsertIntoOperation::Execute() {
         res = _Index_SelectFloatNode(table, attribute.name, filter);
       else if (attribute.type == TYPE_CHAR)
         res = _Index_SelectCharNode(table, attribute.name, filter);
+      cout << "Found " << res.size() << " tuples." << endl;
+      for (auto& ip: res) {
+        cout << "Block id: " << ip.first << ". Content: " << ip.second << endl;
+      }
       if (res.size() > 0) {
         throw runtime_error("Unique constraints are not fulfilled.");
       }
     }
-    count += 1;
+    ++count;
   }
   if (SelectRecordLinearOr(table, filters).size() > 0) {
     throw runtime_error("Unique constraints are not fulfilled.");
   }
-  InsertRecord(table, make_pair(-1, values));
-  // TODO: Insert Index
+  int block_id = InsertRecord(table, make_pair(-1, values));
+  count = 0;
+  for (auto& attribute: attributes) {
+    if (attribute.attribute_type == TYPE_INDEXED ||
+        attribute.attribute_type == TYPE_PRIMARY_KEY) {
+      IndexPair ip = make_pair(block_id, values[count]);
+      if (attribute.type == TYPE_INT)
+        InsertIntIndex(table, attribute.name, ip);
+      else if (attribute.type == TYPE_FLOAT)
+        InsertFloatIndex(table, attribute.name, ip);
+      else if (attribute.type == TYPE_CHAR)
+        InsertCharIndex(table, attribute.name, ip);
+    }
+    ++count;
+  }
   // cout << "Insert 1 record successfully." << endl;
   return 0;
 }

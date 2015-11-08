@@ -135,7 +135,7 @@ namespace db
 
         return 1;
     }
-    
+
     int Buffer::DropIndex(string table_name,string index_name)
     {
         string filename=__GetFilename(table_name,INDEX,index_name);

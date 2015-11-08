@@ -25,8 +25,8 @@ Index_Header::~Index_Header() {
 }
 
 int CreateIntIndex(Table table, std::string attr_name) {
+    BufferDelegate.CreateIndex(table.GetName(), attr_name);
     Index_Header index(table, attr_name);
-    BufferDelegate.CreateIndex(index.tableName, attr_name);
 
     // Reset Root Nodes
     BPT_INT R;
@@ -39,8 +39,8 @@ int CreateIntIndex(Table table, std::string attr_name) {
     return 1;
 }
 int CreateCharIndex(Table table, std::string attr_name) {
+    BufferDelegate.CreateIndex(table.GetName(), attr_name);
     Index_Header index(table, attr_name);
-    BufferDelegate.CreateIndex(index.tableName, attr_name);
 
     // Reset Root Nodes
     BPT_CHAR R;
@@ -53,8 +53,8 @@ int CreateCharIndex(Table table, std::string attr_name) {
     return 1;
 }
 int CreateFloatIndex(Table table, std::string attr_name) {
+    BufferDelegate.CreateIndex(table.GetName(), attr_name);
     Index_Header index(table, attr_name);
-    BufferDelegate.CreateIndex(index.tableName, attr_name);
 
     // Reset Root Nodes
     BPT_FLOAT R;
@@ -184,13 +184,13 @@ void _Index_SplitNode(Index_Header idx, BPT_CHAR &father, BPT_CHAR &current, con
 
     int address = BufferDelegate.GetEmptyIndexBlock(idx.tableName, idx.attrName);
 
-    //father.key[childnum] = current.key[half] ;
+//    father.key[childnum] = current.key[half] ;
     strcpy(father.key[childnum], current.key[half]);
     father.pointer[childnum+1] = address;
 
     for( i = half+1; i < CHAR_STRI_ORDER; i++ )
     {
-        //t.key[i-half-1] = current.key[i] ;
+//        t.key[i-half-1] = current.key[i] ;
         strcpy(t.key[i-half-1], current.key[i]);
         t.pointer[i-half-1] = current.pointer[i];
     }
@@ -258,6 +258,8 @@ void _Insert_IndexforInt(Index_Header idx, int current, IndexPair pair) {
     BPT_INT node;
     _IndexReadBlock(idx, &node, current);
 
+    cout << "FORCE OUTPUT - " << pair.first << ":" << pair.second << endl;
+
     int	i, pairKey = __StringToInt(pair.second);
     for(i=0 ; i<node.countKey && node.key[i]<pairKey; i++);
 
@@ -300,8 +302,11 @@ void _Insert_IndexforChar(Index_Header idx, int current, IndexPair pair) {
     BPT_CHAR node;
     _IndexReadBlock(idx, &node, current);
 
+    cout << "FORCE OUTPUT - " << pair.first << ":" << pair.second << endl;
+
     int	i;
     std::string pairKey = pair.second;
+//    for(i=0 ; i<node.countKey && node.key[i] < pairKey; i++);
     for(i=0 ; i<node.countKey && strcmp(node.key[i],pairKey.c_str())<0; i++);
 
     if(i<node.countKey && node.isLeaf && node.key[i]==pairKey) {
@@ -328,16 +333,24 @@ void _Insert_IndexforChar(Index_Header idx, int current, IndexPair pair) {
     }
     else {
         for(int j = node.countKey ; j > i ; j--) {
-            //node.key[j] = node.key[j-1] ;
+//            node.key[j] = node.key[j-1] ;
             strcpy(node.key[j], node.key[j-1]);
             node.pointer[j] = node.pointer[j-1] ;
         }
-        //node.key[i] = pairKey.c_str();
+        // TODO: IMP
+//        node.key[i] = pairKey.c_str();
+        cout << pairKey.c_str() << endl;
         strcpy(node.key[i], pairKey.c_str());
+        cout << node.key[i] << endl;
         node.countKey++;
         node.pointer[i] = pair.first;
+        cout << "FINDME " << node.pointer[i] << endl;
 
         _IndexWriteBlock(idx, &node, current);
+
+        BPT_CHAR x;
+        _IndexReadBlock(idx, &x, current);
+        cout << x.key[i] << endl;
     }
 }
 void _Insert_IndexforFloat(Index_Header idx, int current, IndexPair pair) {
@@ -484,9 +497,16 @@ IndexPair _Index_SelectBoarderCharNode(Table table, std::string attr_name, Filte
     {
         _IndexReadBlock(index, &a, current);
         std::string pairKey = filter.value;
-        for(i = 0; i < a.countKey && strcmp(pairKey.c_str(), a.key[i]) > 0; i++);
+        cout << "[INBoarder] " << pairKey << endl;
+//        for(i = 0; i < a.countKey && pairKey.c_str() > a.key[i]; i++);
+        for(i = 0; i < a.countKey && (strcmp(pairKey.c_str(), a.key[i]) > 0); i++);
 
+//        if(i < a.countKey && a.isLeaf && pairKey == a.key[i] && a.pointer[i] > 0) {
+        cout << "CSTR" << pairKey.c_str() << endl;
+        cout << "AKEY" << a.key[i] << endl;
+        cout << a.countKey << "-" << (a.pointer[i] > 0) << "-" << a.isLeaf << endl;
         if(i < a.countKey && a.isLeaf && strcmp(pairKey.c_str(), a.key[i])==0 && a.pointer[i] > 0) {
+            cout << "[IN] " << a.key[i] << endl;
             string tmpStr(a.key[i]);
             result = std::pair<int, std::string>(a.pointer[i], tmpStr);
 //            cout << a.key[i] << "-" << a.pointer[i] << endl;
@@ -646,6 +666,8 @@ IndexPairList _Index_SelectIntNode(Table table, std::string attr_name, Filter fi
 IndexPairList _Index_SelectCharNode(Table table, std::string attr_name, Filter filter) {
     Index_Header index(table, attr_name);
     IndexPairList result;
+
+    cout << "[SELECT][OP]:" <<filter.op <<endl;
 
     switch (filter.op) {
         case EQ: {

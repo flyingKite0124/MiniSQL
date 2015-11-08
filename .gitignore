@@ -8,6 +8,7 @@
 *.xml
 *.idea
 CMakeLists.txt
+*.swp
 
 # Precompiled Headers
 *.gch

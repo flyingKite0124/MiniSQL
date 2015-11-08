@@ -85,12 +85,14 @@ void Table::Indexify(string attr_name, string index_name) {
       if (attr.attribute_type == TYPE_NONE)
         throw runtime_error("An index must be created on unique attribute.");
       attr.index_name = index_name;
+      DEBUG << "Before: Create Index" << endl;
       if (attr.type == TYPE_INT)
         CreateIntIndex(*this, attr_name);
       else if (attr.type == TYPE_FLOAT)
         CreateFloatIndex(*this, attr_name);
       else if (attr.type == TYPE_CHAR)
         CreateCharIndex(*this, attr_name);
+      DEBUG << "After: Create Index" << endl;
       if (attr.attribute_type == TYPE_UNIQUE)
         attr.attribute_type = TYPE_INDEXED;
       break;

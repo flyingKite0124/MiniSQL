@@ -46,7 +46,7 @@ namespace db
             std::string __table[100000];
             std::string __index[100000];
             int __type[100000];
-            int __block[100000];
+            int __num[100000];
             int __valid[100000];
             int __pointer;
             int __IsInBuffer(std::string table_name,int type,std::string index_name,int block);

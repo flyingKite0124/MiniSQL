@@ -214,7 +214,7 @@ namespace db
             __table[i]=table_name;
             __index[i]=index_name;
             __type[i]=INDEX;
-            __block[i]=block;
+            __num[i]=block;
             fclose(fp);
         }
         memcpy(content,__buffer[i],4096);
@@ -231,7 +231,7 @@ namespace db
             __table[i]=table_name;
             __index[i]=index_name;
             __type[i]=INDEX;
-            __block[i]=block;
+            __num[i]=block;
         }
         memcpy(__buffer[i],content,4096);
         string filename=__GetFilename(table_name,INDEX,index_name);
@@ -269,7 +269,7 @@ namespace db
             __valid[i]=1;
             __table[i]=table_name;
             __type[i]=DATA;
-            __block[i]=block;
+            __num[i]=block;
             fclose(fp);
         }
         memcpy(content,__buffer[i],4096);
@@ -285,7 +285,7 @@ namespace db
             __valid[i]=1;
             __table[i]=table_name;
             __type[i]=DATA;
-            __block[i]=block;
+            __num[i]=block;
         }
         memcpy(__buffer[i],content,4096);
         string filename=__GetFilename(table_name,DATA);
@@ -309,7 +309,7 @@ namespace db
             __valid[i]=1;
             __table[i]=table_name;
             __type[i]=DATAPAGE;
-            __block[i]=block;
+            __num[i]=block;
             fclose(fp);
         }
         memcpy(content,__buffer[i],4096);
@@ -325,7 +325,7 @@ namespace db
             __valid[i]=1;
             __table[i]=table_name;
             __type[i]=DATAPAGE;
-            __block[i]=block;
+            __num[i]=block;
         }
         memcpy(__buffer[i],content,4096);
         string filename=__GetFilename(table_name,DATAPAGE);
@@ -398,7 +398,7 @@ namespace db
         {
             for(int i=0;i<100000;i++)
             {
-                if(__valid[i]==1&&__type[i]==type&&__table[i]==table_name&&__index[i]==index_name&&__block[i]==block)
+                if(__valid[i]==1&&__type[i]==type&&__table[i]==table_name&&__index[i]==index_name&&__num[i]==block)
                 {
                     return i;
                 }
@@ -414,7 +414,7 @@ namespace db
         {
             for(int i=0;i<100000;i++)
             {
-                if(__valid[i]==1&&__type[i]==type&&__table[i]==table_name&&__block[i]==block)
+                if(__valid[i]==1&&__type[i]==type&&__table[i]==table_name&&__num[i]==block)
                 {
                     return i;
                 }

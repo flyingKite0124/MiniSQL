@@ -1,23 +1,28 @@
 #!/usr/bin/env ruby
-puts """create table student (
-  sno char(8),
-  sname char(16) unique,
-  sage int,
-  sgender char(1),
-  primary key(sno)
+puts """create table orders (
+  orderkey int,
+  custkey int unique,
+  orderstatus char(1),
+  totalprice float,
+  clerk char(15),
+  comments char(79) unique,
+  primary key(orderkey)
 );
+create index custkeyidx on orders(custkey);
+create index commentsidx on orders(comments);
 """
 records = []
-10000.times do |i|
+200000.times do |i|
   records.push({
-    sno: i * 2,
-    sname: rand(36 ** 14).to_s(36),
-    sage: rand(30),
-    sgender: "MF"[rand(2)],
+    orderkey: i * 2,
+    custkey: i * 3,
+    orderstatus: "AB"[rand(2)],
+    totalprice: rand() * 100,
+    clerk: rand(36 ** 12).to_s(36),
+    comments: rand(36 ** 35).to_s(36),
   })
 end
 records.shuffle!
 records.each do |record|
-  puts "insert into student values ('#{record[:sno]}', '#{record[:sname]}', #{record[:sage]}, '#{record[:sgender]}');"
+  puts "insert into orders values (#{record[:orderkey]}, #{record[:custkey]}, '#{record[:orderstatus]}', #{record[:totalprice]}, '#{record[:clerk]}', '#{record[:comments]}');"
 end
-puts "drop table student;"

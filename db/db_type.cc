@@ -36,6 +36,9 @@ inline int GetOutputSize(Attribute attr) {
              attr.type == TYPE_CHAR ? attr.size + 4 : 12);
 }
 
+Filter::Filter() {
+}
+
 Filter::Filter(string s) {
   istringstream in(s);
   string cur;
@@ -242,7 +245,9 @@ int CreateTableOperation::Execute() {
   string index_name = "_pkidx_" + table.GetName();
   if (index_name.length() > 32)
     index_name = index_name.substr(0, 32);
+#ifndef NOINDEX
   table.Indexify(primary_key.name, index_name);
+#endif
   cout << "Create table `" << table.GetName() << "` successfully." << endl;
   return 0;
 }
@@ -272,7 +277,9 @@ int DropTableOperation::Execute() {
   // Drop primary key index
   Table table;
   Catalog::GetTable(table_name, table);
+#ifndef NOINDEX
   DropIndex(table, table.GetPrimaryKey().name);
+#endif
   // Drop table
   Catalog::DropTable(table_name);
   cout << "Drop table `" << table_name << "` successfully." << endl;
@@ -321,10 +328,14 @@ int CreateIndexOperation::Execute() {
   if (!found_attr)
     throw runtime_error("Attribute `" + attr_name + "` is not found on `" +
                         table_name + "`.");
+#ifndef NOINDEX
   table.Indexify(attr_name, index_name);
   // XXX: HOTFIX
   ofstream fout("data/" + index_name + ".idxmap");
   fout << table_name << endl;
+#else
+  throw runtime_error("With mode NOINDEX, this is not allowed.");
+#endif
   return 0;
 }
 
@@ -349,6 +360,7 @@ DropIndexOperation::DropIndexOperation(string command) {
   DEBUG << "==========================================================" << endl;
 }
 int DropIndexOperation::Execute() {
+#ifndef NOINDEX
   // XXX: HOTFIX
   string table_name;
   ifstream fin("data/" + index_name + ".idxmap");
@@ -359,6 +371,9 @@ int DropIndexOperation::Execute() {
   if (!Catalog::GetTable(table_name, table))
     throw runtime_error("Table `" + table_name + "` is not found.");
   table.Unindexify(index_name);
+#else
+  throw runtime_error("With mode NOINDEX, this is not allowed.");
+#endif
   return 0;
 }
 
@@ -401,6 +416,7 @@ int InsertIntoOperation::Execute() {
   FilterList filters;
   int count = 0;
   for (auto& attribute: attributes) {
+#ifndef NOINDEX
     // Not TYPE_NONE
     if (attribute.attribute_type == TYPE_UNIQUE) {
       filters.push_back(Filter(attribute.name + " = " + values[count]));
@@ -423,12 +439,18 @@ int InsertIntoOperation::Execute() {
         throw runtime_error("Unique constraints are not fulfilled.");
       }
     }
+#else
+    if (attribute.attribute_type >= TYPE_UNIQUE) {
+      filters.push_back(Filter(attribute.name + " = " + values[count]));
+    }
+#endif
     ++count;
   }
   if (SelectRecordLinearOr(table, filters).size() > 0) {
     throw runtime_error("Unique constraints are not fulfilled.");
   }
   int block_id = InsertRecord(table, make_pair(-1, values));
+#ifndef NOINDEX
   count = 0;
   for (auto& attribute: attributes) {
     if (attribute.attribute_type == TYPE_INDEXED ||
@@ -443,7 +465,10 @@ int InsertIntoOperation::Execute() {
     }
     ++count;
   }
-  // cout << "Insert 1 record successfully." << endl;
+#endif
+#ifndef NOINSERTLOG
+  cout << "Insert 1 record successfully." << endl;
+#endif
   return 0;
 }
 
@@ -487,17 +512,48 @@ SelectFromOperation::SelectFromOperation(string command) {
 }
 int SelectFromOperation::Execute() {
   Table table;
-  int counter;
+  int counter = 0;
   if (!Catalog::GetTable(table_name, table))
     throw runtime_error("Table `" + table_name + "` is not found.");
-  // TODO: With index
-  // Without index
-  TupleList tuples = SelectRecordLinear(table, filters);
   auto attributes = table.GetAttributes();
+  TupleList tuples;
+#ifndef NOINDEX
+  // Check index
+  int m_weight = 0;
+  Attribute m_attr;
+  Filter m_filter;
+  for (auto& filter: filters) {
+    // Indexed and is not !=
+    if (filter.op == NEQ) continue;
+    for (auto& attr: attributes) {
+      if (filter.key != attr.name) continue;
+      if (attr.attribute_type > m_weight) {
+        m_weight = attr.attribute_type;
+        m_attr = attr;
+        m_filter = filter;
+      }
+    }
+  }
+  if (m_weight >= TYPE_INDEXED) {
+    // With index
+    IndexPairList ipl;
+    if (m_attr.type == TYPE_INT)
+      ipl = _Index_SelectIntNode(table, m_attr.name, m_filter);
+    else if (m_attr.type == TYPE_FLOAT)
+      ipl = _Index_SelectFloatNode(table, m_attr.name, m_filter);
+    else if (m_attr.type == TYPE_CHAR)
+      ipl = _Index_SelectCharNode(table, m_attr.name, m_filter);
+    tuples = SelectRecordByList(table, m_attr.name, ipl, filters);
+  } else {
+    // Without index
+    tuples = SelectRecordLinear(table, filters);
+  }
+#else
+  tuples = SelectRecordLinear(table, filters);
+#endif
   int columns = attributes.size();
   counter = 0;
   for (auto& attr: attributes) {
-    DEBUG << attr.name << " " << GetOutputSize(attr) << endl;
     cout << setw(GetOutputSize(attr)) << attr.name;
   }
   cout << endl;
@@ -557,12 +613,50 @@ int DeleteFromOperation::Execute() {
     throw runtime_error("Table `" + table_name + "` is not found.");
   if (filters.size() == 0) {
     DeleteRecordAll(table);
-    // TODO: Index
+#ifndef NOINDEX
+    for (auto& attr: table.GetAttributes()) {
+      if (attr.attribute_type >= TYPE_INDEXED) {
+        if (attr.type == TYPE_INT)
+          RecreateIntIndex(table, attr.name);
+        else if (attr.type == TYPE_FLOAT)
+          RecreateFloatIndex(table, attr.name);
+        else
+          RecreateCharIndex(table, attr.name);
+      }
+    }
+#endif
     return 0;
   }
-  // TODO: With index
-  // Without index
-  TupleList tuples = DeleteRecordLinear(table, filters[0]);
+  Filter filter = filters[0];
+  TupleList tuples;
+  bool deleted = false;
+#ifndef NOINDEX
+  if (filter.op != NEQ) {
+    for (auto& attr: table.GetAttributes()) {
+      if (attr.name != filter.key) continue;
+      if (attr.attribute_type >= TYPE_INDEXED) {
+        IndexPairList ipl;
+        if (attr.type == TYPE_INT)
+          ipl = _Index_SelectIntNode(table, attr.name, filter);
+        else if (attr.type == TYPE_FLOAT)
+          ipl = _Index_SelectFloatNode(table, attr.name, filter);
+        else if (attr.type == TYPE_CHAR)
+          ipl = _Index_SelectCharNode(table, attr.name, filter);
+        tuples = DeleteRecordByList(table, attr.name, ipl);
+        deleted = true;
+        break;
+      }
+    }
+  }
+#endif
+  if (!deleted) {
+    tuples = DeleteRecordLinear(table, filter);
+#ifndef NOINDEX
+    for (auto& tuple: tuples) {
+      // TODO: Remove index
+    }
+#endif
+  }
   cout << "Delete OK! " << tuples.size() << " records deleted." << endl;
   return 0;
 }
